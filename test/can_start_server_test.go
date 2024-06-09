@@ -142,6 +142,19 @@ func (t *ServerTestSuite) TestCanSetCounterByClient() {
 	t.NoError(err)
 }
 
+func (t *ServerTestSuite) TestCanGetCounterValue() {
+	c := client.New("http://localhost:8080")
+
+	err := c.SendCounter("my_counter", 42)
+	t.NoError(err)
+
+	resp, err := http.Get("http://localhost:8080/value/counter/my_counter")
+	t.NoError(err)
+	b, _ := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	t.Equal("42", string(b))
+}
+
 func (t *ServerTestSuite) TestCanSetCounterByGauge() {
 	c := client.New("http://localhost:8080")
 

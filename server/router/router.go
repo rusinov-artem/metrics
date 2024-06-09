@@ -25,6 +25,10 @@ func (t *Router) RegisterMetricsUpdate(h http.HandlerFunc) {
 	t.mux.Post("/update/{type}/{name}/{value}", h)
 }
 
+func (t *Router) RegisterMetricsGetter(h http.HandlerFunc) {
+	t.mux.Get("/value/{type}/{name}", h)
+}
+
 func (t *Router) Handler() http.Handler {
 	return t.mux
 }

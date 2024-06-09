@@ -79,7 +79,7 @@ func (s *UpdateMetricsTestSuite) Test_CanSetGuage() {
 	defer closeBody(resp)
 
 	s.Equal(http.StatusOK, resp.StatusCode)
-	s.InDelta(float64(42.42), s.metrics.Guage["my_guage"], 0.0001)
+	s.InDelta(float64(42.42), s.metrics.Gauge["my_guage"], 0.0001)
 }
 
 func (s *UpdateMetricsTestSuite) Test_Race() {

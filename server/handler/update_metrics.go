@@ -11,6 +11,9 @@ import (
 type Metrics interface {
 	SetCounter(name string, value int64) error
 	SetGuage(name string, value float64) error
+
+	GetCounter(name string) (int64, error)
+	GetGauge(name string) (float64, error)
 }
 
 type MetricsProvider func() Metrics

@@ -17,6 +17,7 @@ func NewHandler() http.Handler {
 	r := router.New()
 	r.RegisterLiveness(Liveness())
 	r.RegisterMetricsUpdate(UpdateMetrics(metricsProvider))
+	r.RegisterMetricsGetter(GetMetrics(metricsProvider))
 
 	return r.Handler()
 }
