@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -32,7 +33,8 @@ func GetMetrics(metricsProvider MetricsProvider) http.HandlerFunc {
 			}
 
 			w.WriteHeader(http.StatusOK)
-			fmt.Fprintf(w, "%f", v)
+			stringV := strings.TrimRight(fmt.Sprintf("%.3f", v), "0.")
+			fmt.Fprint(w, stringV)
 			return
 		}
 
