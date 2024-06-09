@@ -21,11 +21,7 @@ func NewInMemory() *InMemoryMetrics {
 func (t *InMemoryMetrics) SetCounter(name string, value int64) error {
 	t.Lock()
 	defer t.Unlock()
-	old := t.Counter[name]
-	if old > value {
-		return nil
-	}
-	t.Counter[name] = value
+	t.Counter[name] += value
 	return nil
 }
 
