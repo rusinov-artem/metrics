@@ -33,7 +33,7 @@ func UpdateMetrics(metricsProvider MetricsProvider) http.HandlerFunc {
 			return
 		}
 
-		if metricType == "guage" {
+		if metricType == "gauge" {
 			v, err := strconv.ParseFloat(chi.URLParam(r, "value"), 64)
 			if err != nil {
 				log.Println(err)

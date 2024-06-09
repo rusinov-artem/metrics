@@ -60,6 +60,14 @@ func (s *UpdateMetricsTestSuite) Test_Error404WithoutMetricName() {
 	s.Equal(http.StatusNotFound, resp.Result().StatusCode)
 }
 
+func (s *UpdateMetricsTestSuite) Test_IntegerGuage() {
+	resp := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/update/gauge/integer_guage/100", nil)
+
+	s.handler.ServeHTTP(resp, req)
+	s.Equal(http.StatusOK, resp.Result().StatusCode)
+}
+
 func (s *UpdateMetricsTestSuite) Test_CanSetCounter() {
 	resp := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/update/counter/my_counter/42", nil)
@@ -71,7 +79,7 @@ func (s *UpdateMetricsTestSuite) Test_CanSetCounter() {
 
 func (s *UpdateMetricsTestSuite) Test_CanSetGuage() {
 	resp := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/update/guage/my_guage/42.42", nil)
+	req := httptest.NewRequest(http.MethodPost, "/update/gauge/my_guage/42.42", nil)
 
 	s.handler.ServeHTTP(resp, req)
 	s.Equal(http.StatusOK, resp.Result().StatusCode)
