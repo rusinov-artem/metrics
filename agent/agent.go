@@ -13,6 +13,7 @@ type Client interface {
 }
 
 type Agent struct {
+	sync.Mutex
 	client         Client
 	pollInterval   time.Duration
 	reportInterval time.Duration
@@ -60,6 +61,9 @@ func (t *Agent) sendMetricsLoop(ctx context.Context) {
 }
 
 func (t *Agent) send() {
+	t.Lock()
+	defer t.Unlock()
+
 	for name, value := range t.counter {
 		_ = t.client.SendCounter(name, value)
 	}
@@ -81,6 +85,9 @@ func (t *Agent) updateMetricsLoop(ctx context.Context) {
 }
 
 func (t *Agent) update() {
+	t.Lock()
+	defer t.Unlock()
+
 	t.inc++
 	m := &runtime.MemStats{}
 	runtime.ReadMemStats(m)

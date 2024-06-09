@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"os/exec"
 	"strings"
 	"sync"
@@ -22,6 +23,10 @@ type ServerTestSuite struct {
 }
 
 func TestServer(t *testing.T) {
+	BinTest := os.Getenv("BIN_TEST")
+	if BinTest != "TRUE" {
+		t.Skip("enable this test by env BIN_TEST=TRUE")
+	}
 	suite.Run(t, &ServerTestSuite{})
 }
 
