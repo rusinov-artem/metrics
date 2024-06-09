@@ -1,8 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"time"
 
+	"github.com/rusinov-artem/metrics/agent"
+	"github.com/rusinov-artem/metrics/agent/client"
 	"github.com/spf13/cobra"
 )
 
@@ -12,7 +16,9 @@ func NewAgent() *cobra.Command {
 		Short: "Run agent to send metrics",
 		Long:  "Run agent to send metrics",
 		Run: func(*cobra.Command, []string) {
-			fmt.Println("Cobra agent alive")
+			ctx := context.Background()
+			client := client.New("http://localhost:8080")
+			agent.New(client, time.Second*2, time.Second*10).Run(ctx)
 		},
 	}
 
