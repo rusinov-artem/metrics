@@ -7,25 +7,27 @@ import (
 )
 
 type Client struct {
-	baseUrl string
+	baseURL string
 }
 
-func New(baseUrl string) *Client {
+func New(baseURL string) *Client {
 	return &Client{
-		baseUrl: baseUrl,
+		baseURL: baseURL,
 	}
 }
 
 func (c *Client) SendCounter(name string, value int64) error {
-	url := fmt.Sprintf("%s/update/counter/%s/%d", c.baseUrl, name, value)
+	url := fmt.Sprintf("%s/update/counter/%s/%d", c.baseURL, name, value)
 	url = strings.TrimRight(url, "/")
-	_, err := http.Post(url, "", nil)
+	resp, err := http.Post(url, "", nil)
+	_ = resp.Body.Close()
 	return err
 }
 
 func (c *Client) SendGauge(name string, value float64) error {
-	url := fmt.Sprintf("%s/update/gauge/%s/%f", c.baseUrl, name, value)
+	url := fmt.Sprintf("%s/update/gauge/%s/%f", c.baseURL, name, value)
 	url = strings.TrimRight(url, "/")
-	_, err := http.Post(url, "", nil)
+	resp, err := http.Post(url, "", nil)
+	_ = resp.Body.Close()
 	return err
 }
