@@ -17,14 +17,14 @@ func New() *Router {
 	}
 }
 
-func (this *Router) RegisterLiveness(h http.HandlerFunc) {
-	this.mux.Get("/liveness", h)
+func (t *Router) RegisterLiveness(h http.HandlerFunc) {
+	t.mux.Get("/liveness", h)
 }
 
-func (this *Router) RegisterMetricsUpdate(h http.HandlerFunc) {
-	this.mux.Post("/update/{type}/{name}/{value}", h)
+func (t *Router) RegisterMetricsUpdate(h http.HandlerFunc) {
+	t.mux.Post("/update/{type}/{name}/{value}", h)
 }
 
-func (this *Router) Handler() http.Handler {
-	return this.mux
+func (t *Router) Handler() http.Handler {
+	return t.mux
 }

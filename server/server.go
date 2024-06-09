@@ -24,7 +24,7 @@ func New(h http.Handler) *Server {
 	}
 }
 
-func (this *Server) Run() {
+func (t *Server) Run() {
 	ln, err := net.Listen("tcp", "0.0.0.0:8080")
 	if err != nil {
 		log.Fatalln(err)
@@ -35,7 +35,7 @@ func (this *Server) Run() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		err = this.Srv.Serve(ln)
+		err = t.Srv.Serve(ln)
 		if err != nil {
 			log.Println(err)
 		}
@@ -47,7 +47,7 @@ func (this *Server) Run() {
 
 	ctx, closeFn := context.WithTimeout(context.Background(), 5*time.Second)
 	defer closeFn()
-	err = this.Srv.Shutdown(ctx)
+	err = t.Srv.Shutdown(ctx)
 	if err != nil {
 		log.Println(err)
 	}

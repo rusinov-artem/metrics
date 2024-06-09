@@ -24,16 +24,16 @@ func TestServer(t *testing.T) {
 	suite.Run(t, &ServerTestSuite{})
 }
 
-func (this *ServerTestSuite) SetupSuite() {
-	this.T().Log("SetupSuite")
+func (t *ServerTestSuite) SetupSuite() {
+	t.T().Log("SetupSuite")
 }
 
 type ProfixWriter struct {
 	Prefix string
 }
 
-func (this *ProfixWriter) Write(data []byte) (int, error) {
-	fmt.Printf("%s: %s", this.Prefix, string(data))
+func (t *ProfixWriter) Write(data []byte) (int, error) {
+	fmt.Printf("%s: %s", t.Prefix, string(data))
 	return len(data), nil
 }
 
@@ -48,22 +48,22 @@ func NewProxy() *WriteProxy {
 	}
 }
 
-func (this *WriteProxy) Write(data []byte) (int, error) {
-	this.Lock()
-	defer this.Unlock()
-	return this.W.Write(data)
+func (t *WriteProxy) Write(data []byte) (int, error) {
+	t.Lock()
+	defer t.Unlock()
+	return t.W.Write(data)
 }
 
-func (this *WriteProxy) SetWriter(w io.Writer) {
-	this.Lock()
-	defer this.Unlock()
+func (t *WriteProxy) SetWriter(w io.Writer) {
+	t.Lock()
+	defer t.Unlock()
 }
 
-func (this *WriteProxy) WaitFor(substr string) bool {
-	this.Lock()
+func (t *WriteProxy) WaitFor(substr string) bool {
+	t.Lock()
 	finder := NewLookFor(substr)
-	this.W = finder
-	this.Unlock()
+	t.W = finder
+	t.Unlock()
 	err := finder.Wait(5 * time.Second)
 	return err == nil
 }
@@ -81,65 +81,66 @@ func NewLookFor(substr string) *LookFor {
 	}
 }
 
-func (this *LookFor) Write(data []byte) (int, error) {
-	fmt.Printf("%s: %s", this.Needl, string(data))
-	if strings.Contains(string(data), this.Needl) {
-		fmt.Printf("Found '%s' in:\n  %s\n", this.Needl, string(data))
-		if !this.Found {
-			this.Found = true
-			close(this.Ch)
+func (t *LookFor) Write(data []byte) (int, error) {
+	fmt.Printf("%s: %s", t.Needl, string(data))
+	if strings.Contains(string(data), t.Needl) {
+		fmt.Printf("Found '%s' in:\n  %s\n", t.Needl, string(data))
+		if !t.Found {
+			t.Found = true
+			close(t.Ch)
 		}
 	}
 	return len(data), nil
 }
 
-func (this *LookFor) Wait(d time.Duration) error {
+func (t *LookFor) Wait(d time.Duration) error {
 	select {
-	case <-this.Ch:
+	case <-t.Ch:
 		return nil
 	case <-time.After(d):
-		return fmt.Errorf("timeout. waiting for %s", this.Needl)
+		return fmt.Errorf("timeout. waiting for %s", t.Needl)
 	}
 }
 
-func (this *ServerTestSuite) SetupTest() {
+func (t *ServerTestSuite) SetupTest() {
 	var err error
-	this.proxy = NewProxy()
-	this.cmd = exec.Command("./srv")
-	this.cmd.Stdout = this.proxy
-	this.cmd.Stderr = this.proxy
-	err = this.cmd.Start()
-	this.NoError(err)
+	t.proxy = NewProxy()
+	t.cmd = exec.Command("./srv")
+	t.cmd.Stdout = t.proxy
+	t.cmd.Stderr = t.proxy
+	err = t.cmd.Start()
+	t.NoError(err)
 }
 
-func (this *ServerTestSuite) TestMe() {
-	this.AssertServerIsStarted()
-	fmt.Println(this.cmd.Process.Pid)
-	this.AssertStoppedCorrectly()
+func (t *ServerTestSuite) TestMe() {
+	t.AssertServerIsStarted()
+	fmt.Println(t.cmd.Process.Pid)
+	t.AssertStoppedCorrectly()
 }
 
-func (this *ServerTestSuite) TestLiveness() {
-	this.AssertServerIsStarted()
+func (t *ServerTestSuite) TestLiveness() {
+	t.AssertServerIsStarted()
 	resp, err := http.Get("http://localhost:8080/liveness")
-	this.NoError(err)
-	this.Equal(200, resp.StatusCode)
-	this.AssertStoppedCorrectly()
+	defer func() { _ = resp.Body.Close() }()
+	t.NoError(err)
+	t.Equal(200, resp.StatusCode)
+	t.AssertStoppedCorrectly()
 }
 
-func (this *ServerTestSuite) AssertServerIsStarted() {
-	this.T().Helper()
-	this.True(this.proxy.WaitFor("Server started"), "server must start in 5 seconds")
+func (t *ServerTestSuite) AssertServerIsStarted() {
+	t.T().Helper()
+	t.True(t.proxy.WaitFor("Server started"), "server must start in 5 seconds")
 }
 
-func (this *ServerTestSuite) AssertStoppedCorrectly() {
-	this.T().Helper()
+func (t *ServerTestSuite) AssertStoppedCorrectly() {
+	t.T().Helper()
 	finder := NewLookFor("Server stopped")
-	this.proxy.W = finder
+	t.proxy.W = finder
 
-	err := this.cmd.Process.Signal(syscall.SIGTERM)
-	this.NoError(err)
+	err := t.cmd.Process.Signal(syscall.SIGTERM)
+	t.NoError(err)
 
 	err = finder.Wait(5 * time.Second)
-	this.NoError(err)
+	t.NoError(err)
 
 }

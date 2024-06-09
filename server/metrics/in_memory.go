@@ -12,12 +12,12 @@ func NewInMemory() *InMemoryMetrics {
 	}
 }
 
-func (this *InMemoryMetrics) SetCounter(name string, value int64) error {
-	this.Counter[name] = value
+func (t *InMemoryMetrics) SetCounter(name string, value int64) error {
+	t.Counter[name] = value
 	return nil
 }
 
-func (this *InMemoryMetrics) SetGuage(name string, value float64) error {
-	this.Guage[name] = value
+func (t *InMemoryMetrics) SetGuage(name string, value float64) error {
+	t.Guage[name] = value
 	return nil
 }
