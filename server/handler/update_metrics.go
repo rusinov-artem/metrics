@@ -30,6 +30,7 @@ func UpdateMetrics(metricsProvider MetricsProvider) http.HandlerFunc {
 			}
 			_ = m.SetCounter(metricName, v)
 			w.WriteHeader(http.StatusOK)
+			log.Printf("updated counter '%s' = %d", metricName, v)
 			return
 		}
 
@@ -43,6 +44,7 @@ func UpdateMetrics(metricsProvider MetricsProvider) http.HandlerFunc {
 			}
 			_ = m.SetGuage(metricName, v)
 			w.WriteHeader(http.StatusOK)
+			log.Printf("updated gauge '%s' = %f", metricName, v)
 			return
 		}
 

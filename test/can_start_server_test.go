@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rusinov-artem/metrics/agent/client"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -109,21 +110,44 @@ func (t *ServerTestSuite) SetupTest() {
 	t.cmd.Stderr = t.proxy
 	err = t.cmd.Start()
 	t.NoError(err)
+	t.AssertServerIsStarted()
 }
 
-func (t *ServerTestSuite) TestMe() {
-	t.AssertServerIsStarted()
-	fmt.Println(t.cmd.Process.Pid)
+func (t *ServerTestSuite) TearDownTest() {
 	t.AssertStoppedCorrectly()
 }
 
 func (t *ServerTestSuite) TestLiveness() {
-	t.AssertServerIsStarted()
 	resp, err := http.Get("http://localhost:8080/liveness")
 	defer func() { _ = resp.Body.Close() }()
 	t.NoError(err)
 	t.Equal(200, resp.StatusCode)
-	t.AssertStoppedCorrectly()
+}
+
+func (t *ServerTestSuite) TestCanSetCounterByClient() {
+	c := client.New("http://localhost:8080")
+
+	finder := NewLookFor("my_counter")
+	t.proxy.SetWriter(finder)
+
+	err := c.SendCounter("my_counter", 42)
+	t.NoError(err)
+
+	err = finder.Wait(time.Second)
+	t.NoError(err)
+}
+
+func (t *ServerTestSuite) TestCanSetCounterByGauge() {
+	c := client.New("http://localhost:8080")
+
+	finder := NewLookFor("my_gauge")
+	t.proxy.SetWriter(finder)
+
+	err := c.SendGauge("my_gauge", 42.42)
+	t.NoError(err)
+
+	err = finder.Wait(time.Second)
+	t.NoError(err)
 }
 
 func (t *ServerTestSuite) AssertServerIsStarted() {
