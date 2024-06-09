@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/rusinov-artem/metrics/server"
+	"github.com/rusinov-artem/metrics/server/handler"
 	"github.com/spf13/cobra"
 )
 
@@ -13,7 +14,7 @@ func NewServerCmd() *cobra.Command {
 		Short: "Run server on port 8080",
 		Long:  "Run metrics collector server on port 8080",
 		Run: func(*cobra.Command, []string) {
-			handler := server.NewHandler()
+			handler := handler.NewHandler()
 			server.New(handler).Run()
 		},
 	}
