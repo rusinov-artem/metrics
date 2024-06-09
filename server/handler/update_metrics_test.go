@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 
 	"github.com/rusinov-artem/metrics/server/metrics"
@@ -12,9 +13,8 @@ import (
 
 type UpdateMetricsTestSuite struct {
 	suite.Suite
-	metrics  *metrics.InMemoryMetrics
-	handler  http.Handler
-	recorder *httptest.ResponseRecorder
+	metrics *metrics.InMemoryMetrics
+	handler http.Handler
 }
 
 func TestUpdateMetricsTestSuite(t *testing.T) {
@@ -27,12 +27,12 @@ func (s *UpdateMetricsTestSuite) SetupTest() {
 	r := router.New()
 	r.RegisterMetricsUpdate(handlerFn)
 	s.handler = r.Handler()
-	s.recorder = httptest.NewRecorder()
 }
 
 func (s *UpdateMetricsTestSuite) Do(req *http.Request) *http.Response {
-	s.handler.ServeHTTP(s.recorder, req)
-	return s.recorder.Result()
+	recorder := httptest.NewRecorder()
+	s.handler.ServeHTTP(recorder, req)
+	return recorder.Result()
 }
 
 func (s *UpdateMetricsTestSuite) Test_UnknwonMetricTypeError400() {
@@ -80,4 +80,33 @@ func (s *UpdateMetricsTestSuite) Test_CanSetGuage() {
 
 	s.Equal(http.StatusOK, resp.StatusCode)
 	s.InDelta(float64(42.42), s.metrics.Guage["my_guage"], 0.0001)
+}
+
+func (s *UpdateMetricsTestSuite) Test_Race() {
+	req1 := httptest.NewRequest(http.MethodPost, "/update/gauge/my_guage1/42.42", nil)
+	req2 := httptest.NewRequest(http.MethodPost, "/update/gauge/my_guage2/47.47", nil)
+
+	wg := &sync.WaitGroup{}
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		s.ExecuteTimes(100, req1)
+	}()
+
+	go func() {
+		defer wg.Done()
+		s.ExecuteTimes(100, req2)
+	}()
+
+	wg.Wait()
+
+}
+
+func (s *UpdateMetricsTestSuite) ExecuteTimes(times int, req *http.Request) {
+	for i := 0; i < times; i++ {
+		resp := s.Do(req)
+		defer func() {
+			_ = resp.Body.Close()
+		}()
+	}
 }

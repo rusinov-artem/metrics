@@ -38,32 +38,31 @@ func (t *ProfixWriter) Write(data []byte) (int, error) {
 }
 
 type WriteProxy struct {
-	W io.Writer
+	w io.Writer
 	sync.Mutex
 }
 
 func NewProxy() *WriteProxy {
 	return &WriteProxy{
-		W: &ProfixWriter{Prefix: "Empty Proxy"},
+		w: &ProfixWriter{Prefix: "Empty Proxy"},
 	}
 }
 
 func (t *WriteProxy) Write(data []byte) (int, error) {
 	t.Lock()
 	defer t.Unlock()
-	return t.W.Write(data)
+	return t.w.Write(data)
 }
 
 func (t *WriteProxy) SetWriter(w io.Writer) {
 	t.Lock()
 	defer t.Unlock()
+	t.w = w
 }
 
 func (t *WriteProxy) WaitFor(substr string) bool {
-	t.Lock()
 	finder := NewLookFor(substr)
-	t.W = finder
-	t.Unlock()
+	t.SetWriter(finder)
 	err := finder.Wait(5 * time.Second)
 	return err == nil
 }
@@ -135,7 +134,7 @@ func (t *ServerTestSuite) AssertServerIsStarted() {
 func (t *ServerTestSuite) AssertStoppedCorrectly() {
 	t.T().Helper()
 	finder := NewLookFor("Server stopped")
-	t.proxy.W = finder
+	t.proxy.SetWriter(finder)
 
 	err := t.cmd.Process.Signal(syscall.SIGTERM)
 	t.NoError(err)
