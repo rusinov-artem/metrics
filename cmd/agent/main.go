@@ -12,14 +12,18 @@ import (
 
 type config struct {
 	address        string
-	pollInterval   time.Duration
-	reportInterval time.Duration
+	pollInterval   int
+	reportInterval int
 }
 
 var runAgent = func(cfg config) {
 	ctx := context.Background()
 	client := client.New(fmt.Sprintf("http://%s", cfg.address))
-	agent.New(client, cfg.pollInterval, cfg.reportInterval).Run(ctx)
+	agent.New(
+		client,
+		time.Second*time.Duration(cfg.pollInterval),
+		time.Second*time.Duration(cfg.reportInterval),
+	).Run(ctx)
 }
 
 func NewAgent() *cobra.Command {
@@ -32,8 +36,8 @@ func NewAgent() *cobra.Command {
 	cfg := config{}
 
 	rootCmd.Flags().StringVarP(&cfg.address, "address", "a", "localhost:8080", "server addres to send metrics to")
-	rootCmd.Flags().DurationVarP(&cfg.pollInterval, "poll_interval", "p", time.Second*2, "poll interval")
-	rootCmd.Flags().DurationVarP(&cfg.reportInterval, "report_interval", "r", time.Second*10, "report interval")
+	rootCmd.Flags().IntVarP(&cfg.pollInterval, "poll_interval", "p", 2, "poll interval")
+	rootCmd.Flags().IntVarP(&cfg.reportInterval, "report_interval", "r", 10, "report interval")
 
 	rootCmd.Run = func(*cobra.Command, []string) {
 		runAgent(cfg)

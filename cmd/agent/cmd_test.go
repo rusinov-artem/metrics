@@ -2,7 +2,6 @@ package main
 
 import (
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -10,11 +9,11 @@ import (
 func Test_CanHandleCommandLineArgs(t *testing.T) {
 	runAgent = func(cfg config) {
 		assert.Equal(t, "test_address", cfg.address)
-		assert.Equal(t, 60*time.Second, cfg.pollInterval)
-		assert.Equal(t, 90*time.Second, cfg.reportInterval)
+		assert.Equal(t, 60, cfg.pollInterval)
+		assert.Equal(t, 90, cfg.reportInterval)
 	}
 	cmd := NewAgent()
-	cmd.SetArgs([]string{"", "-a", "test_address", "-p", "60s", "-r", "90s"})
+	cmd.SetArgs([]string{"", "-a", "test_address", "-p", "60", "-r", "90"})
 	err := cmd.Execute()
 	assert.NoError(t, err)
 }
