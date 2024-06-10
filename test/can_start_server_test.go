@@ -61,14 +61,14 @@ func (t *ServerTestSuite) TearDownTest() {
 }
 
 func (t *ServerTestSuite) TestLiveness() {
-	resp, err := http.Get(t.livenessUrl())
+	resp, err := http.Get(t.livenessURL())
 	defer func() { _ = resp.Body.Close() }()
 	t.NoError(err)
 	t.Equal(200, resp.StatusCode)
 }
 
 func (t *ServerTestSuite) TestCanSetCounterByClient() {
-	c := client.New(t.baseUrl())
+	c := client.New(t.baseURL())
 
 	finder := NewLookFor("my_counter")
 	t.proxy.SetWriter(finder)
@@ -81,12 +81,12 @@ func (t *ServerTestSuite) TestCanSetCounterByClient() {
 }
 
 func (t *ServerTestSuite) TestCanGetCounterValue() {
-	c := client.New(t.baseUrl())
+	c := client.New(t.baseURL())
 
 	err := c.SendCounter("my_counter", 42)
 	t.NoError(err)
 
-	resp, err := http.Get(t.baseUrl() + "/value/counter/my_counter")
+	resp, err := http.Get(t.baseURL() + "/value/counter/my_counter")
 	t.NoError(err)
 	b, _ := io.ReadAll(resp.Body)
 	resp.Body.Close()
@@ -94,7 +94,7 @@ func (t *ServerTestSuite) TestCanGetCounterValue() {
 }
 
 func (t *ServerTestSuite) TestCanSetCounterByGauge() {
-	c := client.New(t.baseUrl())
+	c := client.New(t.baseURL())
 
 	finder := NewLookFor("my_gauge")
 	t.proxy.SetWriter(finder)
@@ -134,10 +134,10 @@ func (t *ServerTestSuite) buildCmd() (string, []string) {
 
 }
 
-func (t *ServerTestSuite) livenessUrl() string {
+func (t *ServerTestSuite) livenessURL() string {
 	return fmt.Sprintf("http://%s/liveness", t.serverAddress)
 }
 
-func (t *ServerTestSuite) baseUrl() string {
+func (t *ServerTestSuite) baseURL() string {
 	return fmt.Sprintf("http://%s", t.serverAddress)
 }
