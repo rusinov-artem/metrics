@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"strings"
-	"sync"
 	"syscall"
 	"testing"
 	"time"
@@ -18,8 +16,9 @@ import (
 
 type ServerTestSuite struct {
 	suite.Suite
-	proxy *WriteProxy
-	cmd   *exec.Cmd
+	proxy         *WriteProxy
+	cmd           *exec.Cmd
+	serverAddress string
 }
 
 func TestServer(t *testing.T) {
@@ -27,95 +26,34 @@ func TestServer(t *testing.T) {
 	if BinTest != "TRUE" {
 		t.Skip("enable this test by env BIN_TEST=TRUE")
 	}
-	suite.Run(t, &ServerTestSuite{})
+
+	t.Run("server without arguments", func(t *testing.T) {
+		suite.Run(t, &ServerTestSuite{})
+	})
+
+	t.Run("server with custom address", func(t *testing.T) {
+		suite.Run(t, &ServerTestSuite{serverAddress: "127.0.0.1:9999"})
+	})
 }
 
 func (t *ServerTestSuite) SetupSuite() {
 	t.T().Log("SetupSuite")
 }
 
-type ProfixWriter struct {
-	Prefix string
-}
-
-func (t *ProfixWriter) Write(data []byte) (int, error) {
-	fmt.Printf("%s: %s", t.Prefix, string(data))
-	return len(data), nil
-}
-
-type WriteProxy struct {
-	w io.Writer
-	sync.Mutex
-}
-
-func NewProxy() *WriteProxy {
-	return &WriteProxy{
-		w: &ProfixWriter{Prefix: "Empty Proxy"},
-	}
-}
-
-func (t *WriteProxy) Write(data []byte) (int, error) {
-	t.Lock()
-	defer t.Unlock()
-	return t.w.Write(data)
-}
-
-func (t *WriteProxy) SetWriter(w io.Writer) {
-	t.Lock()
-	defer t.Unlock()
-	t.w = w
-}
-
-func (t *WriteProxy) WaitFor(substr string) bool {
-	finder := NewLookFor(substr)
-	t.SetWriter(finder)
-	err := finder.Wait(5 * time.Second)
-	return err == nil
-}
-
-type LookFor struct {
-	Needl string
-	Found bool
-	Ch    chan struct{}
-}
-
-func NewLookFor(substr string) *LookFor {
-	return &LookFor{
-		Needl: substr,
-		Ch:    make(chan struct{}),
-	}
-}
-
-func (t *LookFor) Write(data []byte) (int, error) {
-	fmt.Printf("%s: %s", t.Needl, string(data))
-	if strings.Contains(string(data), t.Needl) {
-		fmt.Printf("Found '%s' in:\n  %s\n", t.Needl, string(data))
-		if !t.Found {
-			t.Found = true
-			close(t.Ch)
-		}
-	}
-	return len(data), nil
-}
-
-func (t *LookFor) Wait(d time.Duration) error {
-	select {
-	case <-t.Ch:
-		return nil
-	case <-time.After(d):
-		return fmt.Errorf("timeout. waiting for %s", t.Needl)
-	}
-}
-
 func (t *ServerTestSuite) SetupTest() {
 	var err error
 	t.proxy = NewProxy()
-	t.cmd = exec.Command("./srv")
+	cmdName, cmdArgs := t.buildCmd()
+	t.cmd = exec.Command(cmdName, cmdArgs...)
 	t.cmd.Stdout = t.proxy
 	t.cmd.Stderr = t.proxy
 	err = t.cmd.Start()
 	t.NoError(err)
 	t.AssertServerIsStarted()
+
+	if t.serverAddress == "" {
+		t.serverAddress = "0.0.0.0:8080"
+	}
 }
 
 func (t *ServerTestSuite) TearDownTest() {
@@ -123,14 +61,14 @@ func (t *ServerTestSuite) TearDownTest() {
 }
 
 func (t *ServerTestSuite) TestLiveness() {
-	resp, err := http.Get("http://localhost:8080/liveness")
+	resp, err := http.Get(t.livenessUrl())
 	defer func() { _ = resp.Body.Close() }()
 	t.NoError(err)
 	t.Equal(200, resp.StatusCode)
 }
 
 func (t *ServerTestSuite) TestCanSetCounterByClient() {
-	c := client.New("http://localhost:8080")
+	c := client.New(t.baseUrl())
 
 	finder := NewLookFor("my_counter")
 	t.proxy.SetWriter(finder)
@@ -143,12 +81,12 @@ func (t *ServerTestSuite) TestCanSetCounterByClient() {
 }
 
 func (t *ServerTestSuite) TestCanGetCounterValue() {
-	c := client.New("http://localhost:8080")
+	c := client.New(t.baseUrl())
 
 	err := c.SendCounter("my_counter", 42)
 	t.NoError(err)
 
-	resp, err := http.Get("http://localhost:8080/value/counter/my_counter")
+	resp, err := http.Get(t.baseUrl() + "/value/counter/my_counter")
 	t.NoError(err)
 	b, _ := io.ReadAll(resp.Body)
 	resp.Body.Close()
@@ -156,7 +94,7 @@ func (t *ServerTestSuite) TestCanGetCounterValue() {
 }
 
 func (t *ServerTestSuite) TestCanSetCounterByGauge() {
-	c := client.New("http://localhost:8080")
+	c := client.New(t.baseUrl())
 
 	finder := NewLookFor("my_gauge")
 	t.proxy.SetWriter(finder)
@@ -183,5 +121,23 @@ func (t *ServerTestSuite) AssertStoppedCorrectly() {
 
 	err = finder.Wait(5 * time.Second)
 	t.NoError(err)
+}
 
+func (t *ServerTestSuite) buildCmd() (string, []string) {
+	cmd := []string{"./srv"}
+
+	if t.serverAddress != "" {
+		cmd = append(cmd, "-a", t.serverAddress)
+	}
+
+	return cmd[0], cmd[1:]
+
+}
+
+func (t *ServerTestSuite) livenessUrl() string {
+	return fmt.Sprintf("http://%s/liveness", t.serverAddress)
+}
+
+func (t *ServerTestSuite) baseUrl() string {
+	return fmt.Sprintf("http://%s", t.serverAddress)
 }

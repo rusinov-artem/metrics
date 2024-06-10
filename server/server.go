@@ -13,23 +13,25 @@ import (
 )
 
 type Server struct {
-	Srv *http.Server
+	Srv     *http.Server
+	address string
 }
 
-func New(h http.Handler) *Server {
+func New(h http.Handler, address string) *Server {
 	return &Server{
 		Srv: &http.Server{
 			Handler: h,
 		},
+		address: address,
 	}
 }
 
 func (t *Server) Run() {
-	ln, err := net.Listen("tcp", "0.0.0.0:8080")
+	ln, err := net.Listen("tcp", t.address)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Println("Server started")
+	log.Printf("Server started on '%s'", t.address)
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
