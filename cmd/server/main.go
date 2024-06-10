@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"os"
 
 	"github.com/rusinov-artem/metrics/server"
 	"github.com/rusinov-artem/metrics/server/handler"
@@ -22,16 +24,25 @@ func NewServerCmd() *cobra.Command {
 		Use:   "Best metrics project ever",
 		Short: "Run server on port 8080",
 		Long:  "Run metrics collector server on port 8080",
-		Run: func(cmd *cobra.Command, _ []string) {
-			cfg := config{
-				address: cmd.Flags().Lookup("address").Value.String(),
-			}
-
-			runServer(cfg)
-		},
 	}
 
-	rootCmd.Flags().StringP("address", "a", "localhost:8080", "set addres for server to listen on")
+	cfg := config{
+		address: func() string {
+			addr := os.Getenv("ADDRESS")
+			if addr != "" {
+				log.Println("Got ADDRESS env variable")
+			}
+			return addr
+		}(),
+	}
+
+	if cfg.address == "" {
+		rootCmd.Flags().StringVarP(&cfg.address, "address", "a", "localhost:8080", "set addres for server to listen on")
+	}
+
+	rootCmd.Run = func(_ *cobra.Command, _ []string) {
+		runServer(cfg)
+	}
 
 	return rootCmd
 }
