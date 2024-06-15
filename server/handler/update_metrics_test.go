@@ -6,9 +6,10 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/stretchr/testify/suite"
+
 	"github.com/rusinov-artem/metrics/server/metrics"
 	"github.com/rusinov-artem/metrics/server/router"
-	"github.com/stretchr/testify/suite"
 )
 
 type UpdateMetricsTestSuite struct {
@@ -23,10 +24,10 @@ func TestUpdateMetricsTestSuite(t *testing.T) {
 
 func (s *UpdateMetricsTestSuite) SetupTest() {
 	s.metrics = metrics.NewInMemory()
-	handlerFn := UpdateMetrics(func() Metrics { return s.metrics })
+	handlerFn := New(s.metrics).UpdateMetrics
 	r := router.New()
 	r.RegisterMetricsUpdate(handlerFn)
-	s.handler = r.Handler()
+	s.handler = r.Mux()
 }
 
 func (s *UpdateMetricsTestSuite) Do(req *http.Request) *http.Response {
@@ -53,8 +54,8 @@ func (s *UpdateMetricsTestSuite) Test_Error404WithoutMetricName() {
 	s.Equal(http.StatusNotFound, resp.StatusCode)
 }
 
-func (s *UpdateMetricsTestSuite) Test_IntegerGuage() {
-	req := httptest.NewRequest(http.MethodPost, "/update/gauge/integer_guage/100", nil)
+func (s *UpdateMetricsTestSuite) Test_IntegerGauge() {
+	req := httptest.NewRequest(http.MethodPost, "/update/gauge/integer_gauge/100", nil)
 
 	resp := s.Do(req)
 	defer closeBody(resp)
@@ -72,19 +73,19 @@ func (s *UpdateMetricsTestSuite) Test_CanSetCounter() {
 	s.Equal(int64(42), s.metrics.Counter["my_counter"])
 }
 
-func (s *UpdateMetricsTestSuite) Test_CanSetGuage() {
-	req := httptest.NewRequest(http.MethodPost, "/update/gauge/my_guage/42.42", nil)
+func (s *UpdateMetricsTestSuite) Test_CanSetGauge() {
+	req := httptest.NewRequest(http.MethodPost, "/update/gauge/my_gauge/42.42", nil)
 
 	resp := s.Do(req)
 	defer closeBody(resp)
 
 	s.Equal(http.StatusOK, resp.StatusCode)
-	s.InDelta(float64(42.42), s.metrics.Gauge["my_guage"], 0.0001)
+	s.InDelta(42.42, s.metrics.Gauge["my_gauge"], 0.0001)
 }
 
 func (s *UpdateMetricsTestSuite) Test_Race() {
-	req1 := httptest.NewRequest(http.MethodPost, "/update/gauge/my_guage1/42.42", nil)
-	req2 := httptest.NewRequest(http.MethodPost, "/update/gauge/my_guage2/47.47", nil)
+	req1 := httptest.NewRequest(http.MethodPost, "/update/gauge/my_gauge1/42.42", nil)
+	req2 := httptest.NewRequest(http.MethodPost, "/update/gauge/my_gauge2/47.47", nil)
 
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
@@ -105,8 +106,6 @@ func (s *UpdateMetricsTestSuite) Test_Race() {
 func (s *UpdateMetricsTestSuite) ExecuteTimes(times int, req *http.Request) {
 	for i := 0; i < times; i++ {
 		resp := s.Do(req)
-		defer func() {
-			_ = resp.Body.Close()
-		}()
+		_ = resp.Body.Close()
 	}
 }

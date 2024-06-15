@@ -10,13 +10,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rusinov-artem/metrics/agent/client"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/rusinov-artem/metrics/agent/client"
+	"github.com/rusinov-artem/metrics/test/writer"
 )
 
 type ServerTestSuite struct {
 	suite.Suite
-	proxy         *WriteProxy
+	proxy         *writer.WriterProxy
 	cmd           *exec.Cmd
 	serverAddress string
 }
@@ -42,7 +44,7 @@ func (t *ServerTestSuite) SetupSuite() {
 
 func (t *ServerTestSuite) SetupTest() {
 	var err error
-	t.proxy = NewProxy()
+	t.proxy = writer.NewProxy()
 	cmdName, cmdArgs := t.buildCmd()
 	t.cmd = exec.Command(cmdName, cmdArgs...)
 	t.cmd.Stdout = t.proxy
@@ -62,6 +64,7 @@ func (t *ServerTestSuite) TearDownTest() {
 
 func (t *ServerTestSuite) TestLiveness() {
 	resp, err := http.Get(t.livenessURL())
+	t.Require().NoError(err)
 	defer func() { _ = resp.Body.Close() }()
 	t.NoError(err)
 	t.Equal(200, resp.StatusCode)
@@ -70,7 +73,7 @@ func (t *ServerTestSuite) TestLiveness() {
 func (t *ServerTestSuite) TestCanSetCounterByClient() {
 	c := client.New(t.baseURL())
 
-	finder := NewLookFor("my_counter")
+	finder := writer.NewFinder("my_counter")
 	t.proxy.SetWriter(finder)
 
 	err := c.SendCounter("my_counter", 42)
@@ -89,14 +92,14 @@ func (t *ServerTestSuite) TestCanGetCounterValue() {
 	resp, err := http.Get(t.baseURL() + "/value/counter/my_counter")
 	t.NoError(err)
 	b, _ := io.ReadAll(resp.Body)
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	t.Equal("42", string(b))
 }
 
 func (t *ServerTestSuite) TestCanSetCounterByGauge() {
 	c := client.New(t.baseURL())
 
-	finder := NewLookFor("my_gauge")
+	finder := writer.NewFinder("my_gauge")
 	t.proxy.SetWriter(finder)
 
 	err := c.SendGauge("my_gauge", 42.42)
@@ -113,7 +116,7 @@ func (t *ServerTestSuite) AssertServerIsStarted() {
 
 func (t *ServerTestSuite) AssertStoppedCorrectly() {
 	t.T().Helper()
-	finder := NewLookFor("Server stopped")
+	finder := writer.NewFinder("Server stopped")
 	t.proxy.SetWriter(finder)
 
 	err := t.cmd.Process.Signal(syscall.SIGTERM)

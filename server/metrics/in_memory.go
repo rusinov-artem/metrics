@@ -25,7 +25,7 @@ func (t *InMemoryMetrics) SetCounter(name string, value int64) error {
 	return nil
 }
 
-func (t *InMemoryMetrics) SetGuage(name string, value float64) error {
+func (t *InMemoryMetrics) SetGauge(name string, value float64) error {
 	t.Lock()
 	defer t.Unlock()
 	t.Gauge[name] = value

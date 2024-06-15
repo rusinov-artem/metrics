@@ -8,20 +8,20 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type AgetTestSuite struct {
+type AgentTestSuite struct {
 	suite.Suite
 	client *FakeClient
 }
 
 func TestAgent(t *testing.T) {
-	suite.Run(t, &AgetTestSuite{})
+	suite.Run(t, &AgentTestSuite{})
 }
 
-func (s *AgetTestSuite) SetupTest() {
+func (s *AgentTestSuite) SetupTest() {
 	s.client = NewFakeClient()
 }
 
-func (s *AgetTestSuite) Test_CreateAgent() {
+func (s *AgentTestSuite) Test_CreateAgent() {
 	agent := New(s.client, 10*time.Millisecond, 100*time.Millisecond)
 	ctx, closeFn := context.WithTimeout(context.Background(), 2*time.Second)
 	defer closeFn()
