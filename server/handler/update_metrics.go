@@ -18,39 +18,36 @@ type Metrics interface {
 
 type MetricsProvider func() Metrics
 
-func UpdateMetrics(metricsProvider MetricsProvider) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		m := metricsProvider()
-		metricType := chi.URLParam(r, "type")
-		metricName := chi.URLParam(r, "name")
-		if metricType == "counter" {
-			v, err := strconv.ParseInt(chi.URLParam(r, "value"), 10, 64)
-			if err != nil {
-				log.Println(err)
+func (h *Handler) UpdateMetrics(w http.ResponseWriter, r *http.Request) {
+	metricType := chi.URLParam(r, "type")
+	metricName := chi.URLParam(r, "name")
+	if metricType == "counter" {
+		v, err := strconv.ParseInt(chi.URLParam(r, "value"), 10, 64)
+		if err != nil {
+			log.Println(err)
 
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
-			_ = m.SetCounter(metricName, v)
-			w.WriteHeader(http.StatusOK)
-			log.Printf("updated counter '%s' = %d", metricName, v)
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-
-		if metricType == "gauge" {
-			v, err := strconv.ParseFloat(chi.URLParam(r, "value"), 64)
-			if err != nil {
-				log.Println(err)
-
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
-			_ = m.SetGuage(metricName, v)
-			w.WriteHeader(http.StatusOK)
-			log.Printf("updated gauge '%s' = %f", metricName, v)
-			return
-		}
-
-		w.WriteHeader(http.StatusBadRequest)
+		_ = h.metrics.SetCounter(metricName, v)
+		w.WriteHeader(http.StatusOK)
+		log.Printf("updated counter '%s' = %d", metricName, v)
+		return
 	}
+
+	if metricType == "gauge" {
+		v, err := strconv.ParseFloat(chi.URLParam(r, "value"), 64)
+		if err != nil {
+			log.Println(err)
+
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		_ = h.metrics.SetGuage(metricName, v)
+		w.WriteHeader(http.StatusOK)
+		log.Printf("updated gauge '%s' = %f", metricName, v)
+		return
+	}
+
+	w.WriteHeader(http.StatusBadRequest)
 }

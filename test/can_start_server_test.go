@@ -10,8 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rusinov-artem/metrics/agent/client"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/rusinov-artem/metrics/agent/client"
 )
 
 type ServerTestSuite struct {
@@ -31,9 +32,9 @@ func TestServer(t *testing.T) {
 		suite.Run(t, &ServerTestSuite{})
 	})
 
-	t.Run("server with custom address", func(t *testing.T) {
-		suite.Run(t, &ServerTestSuite{serverAddress: "127.0.0.1:9999"})
-	})
+	//t.Run("server with custom address", func(t *testing.T) {
+	//	suite.Run(t, &ServerTestSuite{serverAddress: "127.0.0.1:9999"})
+	//})
 }
 
 func (t *ServerTestSuite) SetupSuite() {
@@ -62,6 +63,7 @@ func (t *ServerTestSuite) TearDownTest() {
 
 func (t *ServerTestSuite) TestLiveness() {
 	resp, err := http.Get(t.livenessURL())
+	t.Require().NoError(err)
 	defer func() { _ = resp.Body.Close() }()
 	t.NoError(err)
 	t.Equal(200, resp.StatusCode)

@@ -7,9 +7,10 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/stretchr/testify/suite"
+
 	"github.com/rusinov-artem/metrics/server/metrics"
 	"github.com/rusinov-artem/metrics/server/router"
-	"github.com/stretchr/testify/suite"
 )
 
 type MetricsGetterTestSuite struct {
@@ -24,10 +25,10 @@ func TestMetricsGetter(t *testing.T) {
 
 func (s *MetricsGetterTestSuite) SetupTest() {
 	s.metrics = metrics.NewInMemory()
-	handlerFn := GetMetrics(func() Metrics { return s.metrics })
+	handlerFn := New(s.metrics).GetMetrics
 	r := router.New()
 	r.RegisterMetricsGetter(handlerFn)
-	s.handler = r.Handler()
+	s.handler = r.Mux()
 }
 
 func (s *MetricsGetterTestSuite) Test_ErrorIfCounterNameNotFound() {

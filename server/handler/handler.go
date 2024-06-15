@@ -1,23 +1,22 @@
 package handler
 
-import (
-	"net/http"
+import "github.com/rusinov-artem/metrics/server/router"
 
-	"github.com/rusinov-artem/metrics/server/metrics"
-	"github.com/rusinov-artem/metrics/server/router"
-)
+type Handler struct {
+	metrics Metrics
+}
 
-func NewHandler() http.Handler {
-
-	m := metrics.NewInMemory()
-	metricsProvider := func() Metrics {
-		return m
+func New(metrics Metrics) *Handler {
+	h := &Handler{
+		metrics: metrics,
 	}
 
-	r := router.New()
-	r.RegisterLiveness(Liveness())
-	r.RegisterMetricsUpdate(UpdateMetrics(metricsProvider))
-	r.RegisterMetricsGetter(GetMetrics(metricsProvider))
+	return h
+}
 
-	return r.Handler()
+func (h *Handler) RegisterIn(r *router.Router) *Handler {
+	r.RegisterMetricsGetter(h.GetMetrics)
+	r.RegisterMetricsUpdate(h.UpdateMetrics)
+	r.RegisterLiveness(h.Liveness)
+	return h
 }

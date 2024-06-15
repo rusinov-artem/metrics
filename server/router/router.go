@@ -29,6 +29,6 @@ func (t *Router) RegisterMetricsGetter(h http.HandlerFunc) {
 	t.mux.Get("/value/{type}/{name}", h)
 }
 
-func (t *Router) Handler() http.Handler {
+func (t *Router) Mux() http.Handler {
 	return t.mux
 }

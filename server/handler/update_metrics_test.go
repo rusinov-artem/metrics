@@ -6,9 +6,10 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/stretchr/testify/suite"
+
 	"github.com/rusinov-artem/metrics/server/metrics"
 	"github.com/rusinov-artem/metrics/server/router"
-	"github.com/stretchr/testify/suite"
 )
 
 type UpdateMetricsTestSuite struct {
@@ -23,10 +24,10 @@ func TestUpdateMetricsTestSuite(t *testing.T) {
 
 func (s *UpdateMetricsTestSuite) SetupTest() {
 	s.metrics = metrics.NewInMemory()
-	handlerFn := UpdateMetrics(func() Metrics { return s.metrics })
+	handlerFn := New(s.metrics).UpdateMetrics
 	r := router.New()
 	r.RegisterMetricsUpdate(handlerFn)
-	s.handler = r.Handler()
+	s.handler = r.Mux()
 }
 
 func (s *UpdateMetricsTestSuite) Do(req *http.Request) *http.Response {

@@ -10,7 +10,7 @@ import (
 )
 
 func TestLiveness(t *testing.T) {
-	h := NewHandler()
+	h := http.HandlerFunc(New(nil).Liveness)
 
 	recorder := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/liveness", nil)
