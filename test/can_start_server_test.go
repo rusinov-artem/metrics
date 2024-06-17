@@ -134,7 +134,6 @@ func (t *ServerTestSuite) buildCmd() (string, []string) {
 	}
 
 	return cmd[0], cmd[1:]
-
 }
 
 func (t *ServerTestSuite) livenessURL() string {
