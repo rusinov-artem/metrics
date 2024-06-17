@@ -30,12 +30,6 @@ func (s *UpdateMetricsTestSuite) SetupTest() {
 	s.handler = r.Mux()
 }
 
-func (s *UpdateMetricsTestSuite) Do(req *http.Request) *http.Response {
-	recorder := httptest.NewRecorder()
-	s.handler.ServeHTTP(recorder, req)
-	return recorder.Result()
-}
-
 func (s *UpdateMetricsTestSuite) Test_UnknwonMetricTypeError400() {
 	req := httptest.NewRequest(http.MethodPost, "/update/unknown/my_counter/42", nil)
 
@@ -52,6 +46,24 @@ func (s *UpdateMetricsTestSuite) Test_Error404WithoutMetricName() {
 	defer closeBody(resp)
 
 	s.Equal(http.StatusNotFound, resp.StatusCode)
+}
+
+func (s *UpdateMetricsTestSuite) Test_ErrorCounterWithBadValue() {
+	req := httptest.NewRequest(http.MethodPost, "/update/counter/name/bad_value", nil)
+
+	resp := s.Do(req)
+	defer closeBody(resp)
+
+	s.Equal(http.StatusBadRequest, resp.StatusCode)
+}
+
+func (s *UpdateMetricsTestSuite) Test_ErrorGaugeWithBadValue() {
+	req := httptest.NewRequest(http.MethodPost, "/update/gauge/name/bad_value", nil)
+
+	resp := s.Do(req)
+	defer closeBody(resp)
+
+	s.Equal(http.StatusBadRequest, resp.StatusCode)
 }
 
 func (s *UpdateMetricsTestSuite) Test_IntegerGauge() {
@@ -108,4 +120,10 @@ func (s *UpdateMetricsTestSuite) ExecuteTimes(times int, req *http.Request) {
 		resp := s.Do(req)
 		_ = resp.Body.Close()
 	}
+}
+
+func (s *UpdateMetricsTestSuite) Do(req *http.Request) *http.Response {
+	recorder := httptest.NewRecorder()
+	s.handler.ServeHTTP(recorder, req)
+	return recorder.Result()
 }

@@ -71,6 +71,16 @@ func (s *MetricsGetterTestSuite) Test_CanGetGaugeValue() {
 	s.InDelta(v, 42.42, 0.0001)
 }
 
+func (s *MetricsGetterTestSuite) Test_BadRequest() {
+	req := httptest.NewRequest(http.MethodGet, "/value/unknown/my_gauge", nil)
+	resp := s.Do(req)
+	defer closeBody(resp)
+	s.Equal(http.StatusBadRequest, resp.StatusCode)
+	b, err := io.ReadAll(resp.Body)
+	s.NoError(err)
+	s.Empty(b)
+}
+
 func (s *MetricsGetterTestSuite) Do(req *http.Request) *http.Response {
 	recorder := httptest.NewRecorder()
 	s.handler.ServeHTTP(recorder, req)

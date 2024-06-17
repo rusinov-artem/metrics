@@ -43,3 +43,15 @@ func (s *ClientTestSuite) Test_CanSendGauge() {
 	s.NoError(err)
 	s.Equal("/update/gauge/my_gauge/42.420000", s.req.URL.Path)
 }
+
+func (s *ClientTestSuite) Test_CanGetErrorOnSendGauge() {
+	client := New(fmt.Sprintf("http://%s", "bad_url"))
+	err := client.SendGauge("name", 0.42)
+	s.Error(err)
+}
+
+func (s *ClientTestSuite) Test_CanGetErrorOnSendCounter() {
+	client := New(fmt.Sprintf("http://%s", "bad_url"))
+	err := client.SendCounter("name", 33)
+	s.Error(err)
+}
