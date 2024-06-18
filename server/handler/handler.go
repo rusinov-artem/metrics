@@ -3,12 +3,12 @@ package handler
 import "github.com/rusinov-artem/metrics/server/router"
 
 type Handler struct {
-	metrics Metrics
+	metricsStorage MetricsStorage
 }
 
-func New(metrics Metrics) *Handler {
+func New(metrics MetricsStorage) *Handler {
 	h := &Handler{
-		metrics: metrics,
+		metricsStorage: metrics,
 	}
 
 	return h

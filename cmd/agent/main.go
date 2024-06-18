@@ -29,7 +29,7 @@ func NewAgent() *cobra.Command {
 		Long:  "Run agent to send metrics",
 	}
 
-	cfg := config.FromEnv().FromCli(cmd)
+	cfg := config.New(cmd)
 
 	cmd.Run = func(*cobra.Command, []string) {
 		runAgent(cfg)

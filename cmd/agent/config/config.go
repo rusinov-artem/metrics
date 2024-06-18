@@ -14,6 +14,10 @@ type Config struct {
 	ReportInterval int
 }
 
+func New(cmd *cobra.Command) *Config {
+	return fromEnv().FromCli(cmd)
+}
+
 func (c *Config) FromCli(cmd *cobra.Command) *Config {
 	if c.Address == "" {
 		cmd.Flags().StringVarP(&c.Address, "Address", "a", "localhost:8080", "server address to send metrics to")
@@ -30,7 +34,7 @@ func (c *Config) FromCli(cmd *cobra.Command) *Config {
 	return c
 }
 
-func FromEnv() *Config {
+func fromEnv() *Config {
 	return &Config{
 		Address: func() string {
 			addr := os.Getenv("ADDRESS")

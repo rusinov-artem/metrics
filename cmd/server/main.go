@@ -25,9 +25,9 @@ func NewServerCmd() *cobra.Command {
 		Long:  "Run metrics collector server on port 8080",
 	}
 
-	cfg := config.FromEnv().FromCli(cmd)
+	cfg := config.New(cmd)
 
-	cmd.Run = func(_ *cobra.Command, _ []string) {
+	cmd.Run = func(*cobra.Command, []string) {
 		runServer(cfg)
 	}
 

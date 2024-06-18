@@ -8,7 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-type Metrics interface {
+type MetricsStorage interface {
 	SetCounter(name string, value int64) error
 	SetGauge(name string, value float64) error
 
@@ -16,7 +16,7 @@ type Metrics interface {
 	GetGauge(name string) (float64, error)
 }
 
-type MetricsProvider func() Metrics
+type MetricsProvider func() MetricsStorage
 
 func (h *Handler) UpdateMetrics(w http.ResponseWriter, r *http.Request) {
 	metricType := chi.URLParam(r, "type")
@@ -29,7 +29,7 @@ func (h *Handler) UpdateMetrics(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		_ = h.metrics.SetCounter(metricName, v)
+		_ = h.metricsStorage.SetCounter(metricName, v)
 		w.WriteHeader(http.StatusOK)
 		log.Printf("updated counter '%s' = %d", metricName, v)
 		return
@@ -43,7 +43,7 @@ func (h *Handler) UpdateMetrics(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		_ = h.metrics.SetGauge(metricName, v)
+		_ = h.metricsStorage.SetGauge(metricName, v)
 		w.WriteHeader(http.StatusOK)
 		log.Printf("updated gauge '%s' = %f", metricName, v)
 		return
