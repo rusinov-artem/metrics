@@ -7,8 +7,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/zap"
 
 	"github.com/rusinov-artem/metrics/server/metrics"
+	"github.com/rusinov-artem/metrics/server/middleware"
 	"github.com/rusinov-artem/metrics/server/router"
 )
 
@@ -26,6 +28,7 @@ func (s *UpdateMetricsTestSuite) SetupTest() {
 	s.metrics = metrics.NewInMemory()
 	handlerFn := New(s.metrics).UpdateMetrics
 	r := router.New()
+	r.AddMiddleware(middleware.Logger(zap.NewNop()))
 	r.RegisterMetricsUpdate(handlerFn)
 	s.handler = r.Mux()
 }
