@@ -40,3 +40,7 @@ func (t *Router) RegisterMetricsGetter(h http.HandlerFunc) {
 func (t *Router) Mux() http.Handler {
 	return t.mux
 }
+
+func (t *Router) RegisterUpdate(h http.HandlerFunc) {
+	t.mux.Method(http.MethodPost, "/update", t.middleware(h))
+}

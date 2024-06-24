@@ -18,5 +18,6 @@ func (h *Handler) RegisterIn(r *router.Router) *Handler {
 	r.RegisterMetricsGetter(h.GetMetrics)
 	r.RegisterMetricsUpdate(h.UpdateMetrics)
 	r.RegisterLiveness(h.Liveness)
+	r.RegisterUpdate(h.Update)
 	return h
 }
