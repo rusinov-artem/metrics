@@ -26,15 +26,15 @@ func (t *Router) AddMiddleware(m middleware.Middleware) {
 }
 
 func (t *Router) RegisterLiveness(h http.HandlerFunc) {
-	t.mux.Method(http.MethodGet, "/liveness", t.middleware(h))
+	t.mux.Method(http.MethodGet, "/liveness", t.withMiddleware(h))
 }
 
 func (t *Router) RegisterMetricsUpdate(h http.HandlerFunc) {
-	t.mux.Method(http.MethodPost, "/update/{type}/{name}/{value}", t.middleware(h))
+	t.mux.Method(http.MethodPost, "/update/{type}/{name}/{value}", t.withMiddleware(h))
 }
 
 func (t *Router) RegisterMetricsGetter(h http.HandlerFunc) {
-	t.mux.Method(http.MethodGet, "/value/{type}/{name}", t.middleware(h))
+	t.mux.Method(http.MethodGet, "/value/{type}/{name}", t.withMiddleware(h))
 }
 
 func (t *Router) Mux() http.Handler {
@@ -42,13 +42,19 @@ func (t *Router) Mux() http.Handler {
 }
 
 func (t *Router) RegisterUpdate(h http.HandlerFunc) {
-	t.mux.Method(http.MethodPost, "/update/", t.middleware(h))
+	t.mux.Method(http.MethodPost, "/update/", t.withMiddleware(h))
 }
 
 func (t *Router) RegisterValue(h http.HandlerFunc) {
-	t.mux.Method(http.MethodPost, "/value/", t.middleware(h))
+	t.mux.Method(http.MethodPost, "/value/", t.withMiddleware(h))
 }
 
 func (t *Router) RegisterInfo(h http.HandlerFunc) {
-	t.mux.Method(http.MethodGet, "/", t.middleware(h))
+	t.mux.Method(http.MethodGet, "/", t.withMiddleware(h))
+}
+
+func (t *Router) withMiddleware(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.middleware(h).ServeHTTP(w, r)
+	})
 }
