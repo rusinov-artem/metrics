@@ -32,7 +32,13 @@ func (c *Client) SendCounter(name string, value int64) error {
 
 	data, _ := json.Marshal(m)
 
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(data))
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Accept-Encoding", "gzip")
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -51,10 +57,18 @@ func (c *Client) SendGauge(name string, value float64) error {
 
 	data, _ := json.Marshal(m)
 
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(data))
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
 	if err != nil {
 		return err
 	}
+
+	req.Header.Set("Accept-Encoding", "gzip")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+
 	_ = resp.Body.Close()
 	return err
 }

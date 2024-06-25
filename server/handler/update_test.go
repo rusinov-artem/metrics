@@ -34,6 +34,7 @@ func (s *UpdateTestSuite) SetupTest() {
 	handlerFn := New(s.metrics).Update
 	r := router.New()
 	r.AddMiddleware(middleware.Logger(zap.NewNop()))
+	r.AddMiddleware(middleware.GzipEncoder())
 	r.RegisterUpdate(handlerFn)
 	s.handler = r.Mux()
 }
