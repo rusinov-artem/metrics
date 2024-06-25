@@ -17,7 +17,7 @@ func New(cmd *cobra.Command) *Config {
 
 func (c *Config) FromCli(cmd *cobra.Command) *Config {
 	if c.Address == "" {
-		cmd.Flags().StringVarP(&c.Address, "address", "a", "localhost:8080", "set address for server to listen on")
+		cmd.Flags().StringVarP(&c.Address, "address", "a", "0.0.0.0:8080", "set address for server to listen on")
 	}
 	return c
 }

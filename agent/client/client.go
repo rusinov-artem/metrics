@@ -46,7 +46,7 @@ func (c *Client) SendGauge(name string, value float64) error {
 
 	m := dto.Metrics{
 		ID:    name,
-		MType: "counter",
+		MType: "gauge",
 		Value: h.Ptr(value),
 	}
 
