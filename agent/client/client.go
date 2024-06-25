@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/rusinov-artem/metrics/dto"
+	"github.com/rusinov-artem/metrics/h"
 )
 
 type Client struct {
@@ -28,7 +28,7 @@ func (c *Client) SendCounter(name string, value int64) error {
 	m := dto.Metrics{
 		ID:    name,
 		MType: "counter",
-		Value: []byte(strconv.FormatInt(value, 10)),
+		Delta: h.Ptr(value),
 	}
 
 	data, _ := json.Marshal(m)
@@ -47,7 +47,7 @@ func (c *Client) SendGauge(name string, value float64) error {
 	m := dto.Metrics{
 		ID:    name,
 		MType: "counter",
-		Value: []byte(strconv.FormatFloat(value, 'f', -1, 64)),
+		Value: h.Ptr(value),
 	}
 
 	data, _ := json.Marshal(m)

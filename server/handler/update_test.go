@@ -77,11 +77,7 @@ func (s *UpdateTestSuite) Test_CanUpdateCounterWithValue() {
 	s.Require().NoError(err)
 
 	s.Equal(http.StatusOK, resp.StatusCode)
-	s.Equal(dto.Metrics{
-		ID:    "",
-		MType: "counter",
-		Value: []byte("42"),
-	}, actual)
+	s.Equal(int64(42), *actual.Delta)
 	s.Equal("application/json", resp.Header.Get("Content-Type"))
 }
 
@@ -97,11 +93,8 @@ func (s *UpdateTestSuite) Test_CanUpdateCounterWithNameAndValue() {
 	s.Require().NoError(err)
 
 	s.Equal(http.StatusOK, resp.StatusCode)
-	s.Equal(dto.Metrics{
-		ID:    "my_counter",
-		MType: "counter",
-		Value: []byte("42"),
-	}, actual)
+	s.Equal("my_counter", actual.ID)
+	s.Equal(int64(42), *actual.Delta)
 	s.Equal("application/json", resp.Header.Get("Content-Type"))
 }
 
@@ -126,7 +119,7 @@ func (s *UpdateTestSuite) Test_CanUpdateGaugeWithValue() {
 	s.Require().NoError(err)
 
 	s.Equal(http.StatusOK, resp.StatusCode)
-	s.Equal(json.RawMessage("42.420000"), actual.Value)
+	s.InDelta(42.42, *actual.Value, 0.001)
 	s.Equal("application/json", resp.Header.Get("Content-Type"))
 }
 
@@ -142,7 +135,7 @@ func (s *UpdateTestSuite) Test_CanUpdateGaugeWithNameAndValue() {
 	s.Require().NoError(err)
 
 	s.Equal(http.StatusOK, resp.StatusCode)
-	s.Equal(json.RawMessage("42.420000"), actual.Value)
+	s.InDelta(42.42, *actual.Value, 0.001)
 	s.Equal("my_gauge", actual.ID)
 	s.Equal("application/json", resp.Header.Get("Content-Type"))
 }
@@ -185,7 +178,7 @@ func counter(v int) io.Reader {
 		fmt.Sprintf(`
 	{
 		"type": "counter",
-		"value": %d
+		"delta": %d
 	}
 `, v))
 }
@@ -228,7 +221,7 @@ func counterWithName(n string, v int) io.Reader {
 	{
 		"id":"%s",
 		"type": "counter",
-		"value": %d
+		"delta": %d
 	}
 `, n, v))
 }
