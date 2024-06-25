@@ -92,7 +92,7 @@ func (t *Agent) update() {
 	m := &runtime.MemStats{}
 	runtime.ReadMemStats(m)
 	t.gauge["Alloc"] = float64(m.Alloc)
-	t.gauge["BuchHashSys"] = float64(m.BuckHashSys)
+	t.gauge["BuckHashSys"] = float64(m.BuckHashSys)
 	t.gauge["Frees"] = float64(m.Frees)
 	t.gauge["GCCPUFraction"] = float64(m.GCCPUFraction)
 	t.gauge["GCSys"] = float64(m.GCSys)
@@ -103,7 +103,7 @@ func (t *Agent) update() {
 	t.gauge["HeapReleased"] = float64(m.HeapReleased)
 	t.gauge["HeapSys"] = float64(m.HeapSys)
 	t.gauge["LastGC"] = float64(m.LastGC)
-	t.gauge["Lookup"] = float64(m.Lookups)
+	t.gauge["Lookups"] = float64(m.Lookups)
 	t.gauge["MCacheInuse"] = float64(m.MCacheInuse)
 	t.gauge["MCacheSys"] = float64(m.MCacheSys)
 	t.gauge["MSpanInuse"] = float64(m.MSpanInuse)
@@ -119,6 +119,6 @@ func (t *Agent) update() {
 	t.gauge["Sys"] = float64(m.Sys)
 	t.gauge["TotalAlloc"] = float64(m.TotalAlloc)
 
-	t.counter["PollCounter"] = t.inc
+	t.counter["PollCount"] = t.inc + 100
 	t.gauge["RandomValue"] = 42.342 * float64(t.inc)
 }
