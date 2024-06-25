@@ -18,9 +18,9 @@ import (
 var runServer = func(cfg *config.Config) {
 	logger, _ := zap.NewDevelopment()
 	router := router.New()
-	router.AddMiddleware(middleware.GzipEncoder())
-	router.AddMiddleware(middleware.Logger(logger))
 	handler.New(metrics.NewInMemory()).RegisterIn(router)
+	router.AddMiddleware(middleware.Logger(logger))
+	router.AddMiddleware(middleware.GzipEncoder())
 	server.New(router.Mux(), cfg.Address).Run()
 }
 
