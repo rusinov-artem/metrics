@@ -41,7 +41,7 @@ func (s *ClientTestSuite) TearDownTest() {
 func (s *ClientTestSuite) Test_CanSendCounter() {
 	err := s.client.SendCounter("my_counter", 42)
 	s.NoError(err)
-	s.Equal("/update", s.req.URL.Path)
+	s.Equal("/update/", s.req.URL.Path)
 	s.Require().NoError(err)
 	m := dto.Metrics{}
 	_ = json.Unmarshal(s.body, &m)
@@ -52,7 +52,7 @@ func (s *ClientTestSuite) Test_CanSendCounter() {
 func (s *ClientTestSuite) Test_CanSendGauge() {
 	err := s.client.SendGauge("my_gauge", 42.42)
 	s.NoError(err)
-	s.Equal("/update", s.req.URL.Path)
+	s.Equal("/update/", s.req.URL.Path)
 	m := dto.Metrics{}
 	_ = json.Unmarshal(s.body, &m)
 	s.Equal("my_gauge", m.ID)

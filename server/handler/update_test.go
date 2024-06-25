@@ -40,7 +40,7 @@ func (s *UpdateTestSuite) SetupTest() {
 }
 
 func (s *UpdateTestSuite) Test_ErrorOnBadRequest() {
-	req := httptest.NewRequest(http.MethodPost, "/update", nil)
+	req := httptest.NewRequest(http.MethodPost, "/update/", nil)
 
 	resp := s.Do(req)
 	defer closeBody(resp)
@@ -49,7 +49,7 @@ func (s *UpdateTestSuite) Test_ErrorOnBadRequest() {
 }
 
 func (s *UpdateTestSuite) Test_Error400WithoutType() {
-	req := httptest.NewRequest(http.MethodPost, "/update", Empty())
+	req := httptest.NewRequest(http.MethodPost, "/update/", Empty())
 
 	resp := s.Do(req)
 	defer closeBody(resp)
@@ -58,7 +58,7 @@ func (s *UpdateTestSuite) Test_Error400WithoutType() {
 }
 
 func (s *UpdateTestSuite) Test_Error400WithoutCounterValue() {
-	req := httptest.NewRequest(http.MethodPost, "/update", CounterNoValue())
+	req := httptest.NewRequest(http.MethodPost, "/update/", CounterNoValue())
 
 	resp := s.Do(req)
 	defer closeBody(resp)
@@ -67,7 +67,7 @@ func (s *UpdateTestSuite) Test_Error400WithoutCounterValue() {
 }
 
 func (s *UpdateTestSuite) Test_CanUpdateCounterWithValue() {
-	req := httptest.NewRequest(http.MethodPost, "/update", counter(42))
+	req := httptest.NewRequest(http.MethodPost, "/update/", counter(42))
 
 	resp := s.Do(req)
 	defer closeBody(resp)
@@ -87,7 +87,7 @@ func (s *UpdateTestSuite) Test_CanUpdateCounterWithValue() {
 }
 
 func (s *UpdateTestSuite) Test_CanUpdateCounterWithNameAndValue() {
-	req := httptest.NewRequest(http.MethodPost, "/update", counterWithName("my_counter", 42))
+	req := httptest.NewRequest(http.MethodPost, "/update/", counterWithName("my_counter", 42))
 
 	resp := s.Do(req)
 	defer closeBody(resp)
@@ -107,7 +107,7 @@ func (s *UpdateTestSuite) Test_CanUpdateCounterWithNameAndValue() {
 }
 
 func (s *UpdateTestSuite) Test_Error400WithoutGaugeValue() {
-	req := httptest.NewRequest(http.MethodPost, "/update", GaugeNoValue())
+	req := httptest.NewRequest(http.MethodPost, "/update/", GaugeNoValue())
 
 	resp := s.Do(req)
 	defer closeBody(resp)
@@ -116,7 +116,7 @@ func (s *UpdateTestSuite) Test_Error400WithoutGaugeValue() {
 }
 
 func (s *UpdateTestSuite) Test_CanUpdateGaugeWithValue() {
-	req := httptest.NewRequest(http.MethodPost, "/update", gauge(42.42))
+	req := httptest.NewRequest(http.MethodPost, "/update/", gauge(42.42))
 
 	resp := s.Do(req)
 	defer closeBody(resp)
@@ -132,7 +132,7 @@ func (s *UpdateTestSuite) Test_CanUpdateGaugeWithValue() {
 }
 
 func (s *UpdateTestSuite) Test_CanUpdateGaugeWithNameAndValue() {
-	req := httptest.NewRequest(http.MethodPost, "/update", gaugeWithName("my_gauge", 42.42))
+	req := httptest.NewRequest(http.MethodPost, "/update/", gaugeWithName("my_gauge", 42.42))
 
 	resp := s.Do(req)
 	defer closeBody(resp)
@@ -149,8 +149,8 @@ func (s *UpdateTestSuite) Test_CanUpdateGaugeWithNameAndValue() {
 }
 
 func (s *UpdateTestSuite) Test_Race() {
-	req1 := httptest.NewRequest(http.MethodPost, "/update", gaugeWithName("g1", 13.13))
-	req2 := httptest.NewRequest(http.MethodPost, "/update", gaugeWithName("g2", 14.13))
+	req1 := httptest.NewRequest(http.MethodPost, "/update/", gaugeWithName("g1", 13.13))
+	req2 := httptest.NewRequest(http.MethodPost, "/update/", gaugeWithName("g2", 14.13))
 
 	wg := &sync.WaitGroup{}
 	wg.Add(2)

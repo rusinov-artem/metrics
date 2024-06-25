@@ -15,14 +15,14 @@ type Client struct {
 }
 
 func New(baseURL string) *Client {
+	baseURL = strings.TrimSuffix(baseURL, "/")
 	return &Client{
 		baseURL: baseURL,
 	}
 }
 
 func (c *Client) SendCounter(name string, value int64) error {
-	url := fmt.Sprintf("%s/update", c.baseURL)
-	url = strings.TrimRight(url, "/")
+	url := fmt.Sprintf("%s/update/", c.baseURL)
 
 	m := dto.Metrics{
 		ID:    name,
@@ -41,8 +41,7 @@ func (c *Client) SendCounter(name string, value int64) error {
 }
 
 func (c *Client) SendGauge(name string, value float64) error {
-	url := fmt.Sprintf("%s/update", c.baseURL)
-	url = strings.TrimRight(url, "/")
+	url := fmt.Sprintf("%s/update/", c.baseURL)
 
 	m := dto.Metrics{
 		ID:    name,

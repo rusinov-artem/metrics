@@ -42,5 +42,5 @@ func (t *Router) Mux() http.Handler {
 }
 
 func (t *Router) RegisterUpdate(h http.HandlerFunc) {
-	t.mux.Method(http.MethodPost, "/update", t.middleware(h))
+	t.mux.Method(http.MethodPost, "/update/", t.middleware(h))
 }
