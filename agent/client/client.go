@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/rusinov-artem/metrics/dto"
@@ -27,7 +28,7 @@ func (c *Client) SendCounter(name string, value int64) error {
 	m := dto.Metrics{
 		ID:    name,
 		MType: "counter",
-		Delta: &value,
+		Value: []byte(strconv.FormatInt(value, 10)),
 	}
 
 	data, _ := json.Marshal(m)
@@ -46,7 +47,7 @@ func (c *Client) SendGauge(name string, value float64) error {
 	m := dto.Metrics{
 		ID:    name,
 		MType: "counter",
-		Value: &value,
+		Value: []byte(strconv.FormatFloat(value, 'f', -1, 64)),
 	}
 
 	data, _ := json.Marshal(m)

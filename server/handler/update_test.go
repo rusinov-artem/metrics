@@ -14,7 +14,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/rusinov-artem/metrics/dto"
-	"github.com/rusinov-artem/metrics/h"
 	"github.com/rusinov-artem/metrics/server/metrics"
 	"github.com/rusinov-artem/metrics/server/middleware"
 	"github.com/rusinov-artem/metrics/server/router"
@@ -81,7 +80,7 @@ func (s *UpdateTestSuite) Test_CanUpdateCounterWithValue() {
 	s.Equal(dto.Metrics{
 		ID:    "",
 		MType: "counter",
-		Delta: h.Ptr[int64](42),
+		Value: []byte("42"),
 	}, actual)
 	s.Equal("application/json", resp.Header.Get("Content-Type"))
 }
@@ -101,7 +100,7 @@ func (s *UpdateTestSuite) Test_CanUpdateCounterWithNameAndValue() {
 	s.Equal(dto.Metrics{
 		ID:    "my_counter",
 		MType: "counter",
-		Delta: h.Ptr[int64](42),
+		Value: []byte("42"),
 	}, actual)
 	s.Equal("application/json", resp.Header.Get("Content-Type"))
 }
@@ -127,7 +126,7 @@ func (s *UpdateTestSuite) Test_CanUpdateGaugeWithValue() {
 	s.Require().NoError(err)
 
 	s.Equal(http.StatusOK, resp.StatusCode)
-	s.InDelta(42.42, *actual.Value, 0.001)
+	s.Equal(json.RawMessage("42.420000"), actual.Value)
 	s.Equal("application/json", resp.Header.Get("Content-Type"))
 }
 
@@ -143,7 +142,7 @@ func (s *UpdateTestSuite) Test_CanUpdateGaugeWithNameAndValue() {
 	s.Require().NoError(err)
 
 	s.Equal(http.StatusOK, resp.StatusCode)
-	s.InDelta(42.42, *actual.Value, 0.001)
+	s.Equal(json.RawMessage("42.420000"), actual.Value)
 	s.Equal("my_gauge", actual.ID)
 	s.Equal("application/json", resp.Header.Get("Content-Type"))
 }
@@ -186,7 +185,7 @@ func counter(v int) io.Reader {
 		fmt.Sprintf(`
 	{
 		"type": "counter",
-		"delta": %d
+		"value": %d
 	}
 `, v))
 }
@@ -229,7 +228,7 @@ func counterWithName(n string, v int) io.Reader {
 	{
 		"id":"%s",
 		"type": "counter",
-		"delta": %d
+		"value": %d
 	}
 `, n, v))
 }

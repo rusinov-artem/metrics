@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/rusinov-artem/metrics/dto"
 )
@@ -17,27 +18,40 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if m.MType == "counter" {
-		if m.Delta == nil {
+		if len(m.Value) < 1 {
 			http.Error(w, "counter value must be set", http.StatusBadRequest)
+			return
+		}
+
+		v, err := strconv.ParseInt(string(m.Value), 10, 64)
+		if err != nil {
+			http.Error(w, "unable to parse value", http.StatusBadRequest)
 			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		_ = h.metricsStorage.SetCounter(m.ID, *m.Delta)
+		_ = h.metricsStorage.SetCounter(m.ID, v)
 		_ = e.Encode(m)
 		return
 	}
 
 	if m.MType == "gauge" {
-		if m.Value == nil {
+		if len(m.Value) < 1 {
 			http.Error(w, "counter value must be set", http.StatusBadRequest)
+			return
+
+		}
+
+		v, err := strconv.ParseFloat(string(m.Value), 64)
+		if err != nil {
+			http.Error(w, "unable to parse value", http.StatusBadRequest)
 			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		_ = h.metricsStorage.SetGauge(m.ID, *m.Value)
+		_ = h.metricsStorage.SetGauge(m.ID, v)
 		_ = e.Encode(m)
 		return
 	}

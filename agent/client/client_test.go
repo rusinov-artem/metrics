@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -46,7 +47,8 @@ func (s *ClientTestSuite) Test_CanSendCounter() {
 	m := dto.Metrics{}
 	_ = json.Unmarshal(s.body, &m)
 	s.Equal("my_counter", m.ID)
-	s.Equal(int64(42), *m.Delta)
+	v, _ := strconv.ParseInt(string(m.Value), 10, 64)
+	s.Equal(int64(42), v)
 }
 
 func (s *ClientTestSuite) Test_CanSendGauge() {
@@ -56,7 +58,8 @@ func (s *ClientTestSuite) Test_CanSendGauge() {
 	m := dto.Metrics{}
 	_ = json.Unmarshal(s.body, &m)
 	s.Equal("my_gauge", m.ID)
-	s.InDelta(42.42, *m.Value, 0.001)
+	v, _ := strconv.ParseFloat(string(m.Value), 64)
+	s.InDelta(42.42, v, 0.001)
 }
 
 func (s *ClientTestSuite) Test_CanGetErrorOnSendGauge() {
