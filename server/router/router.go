@@ -48,3 +48,7 @@ func (t *Router) RegisterUpdate(h http.HandlerFunc) {
 func (t *Router) RegisterValue(h http.HandlerFunc) {
 	t.mux.Method(http.MethodPost, "/value/", t.middleware(h))
 }
+
+func (t *Router) RegisterInfo(h http.HandlerFunc) {
+	t.mux.Method(http.MethodGet, "/", t.middleware(h))
+}
