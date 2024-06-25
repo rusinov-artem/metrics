@@ -16,8 +16,6 @@ type MetricsStorage interface {
 	GetGauge(name string) (float64, error)
 }
 
-type MetricsProvider func() MetricsStorage
-
 func (h *Handler) UpdateMetrics(w http.ResponseWriter, r *http.Request) {
 	metricType := chi.URLParam(r, "type")
 	metricName := chi.URLParam(r, "name")

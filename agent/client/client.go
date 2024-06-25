@@ -1,9 +1,13 @@
 package client
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
+
+	"github.com/rusinov-artem/metrics/dto"
 )
 
 type Client struct {
@@ -11,15 +15,24 @@ type Client struct {
 }
 
 func New(baseURL string) *Client {
+	baseURL = strings.TrimSuffix(baseURL, "/")
 	return &Client{
 		baseURL: baseURL,
 	}
 }
 
 func (c *Client) SendCounter(name string, value int64) error {
-	url := fmt.Sprintf("%s/update/counter/%s/%d", c.baseURL, name, value)
-	url = strings.TrimRight(url, "/")
-	resp, err := http.Post(url, "", nil)
+	url := fmt.Sprintf("%s/update/", c.baseURL)
+
+	m := dto.Metrics{
+		ID:    name,
+		MType: "counter",
+		Delta: &value,
+	}
+
+	data, _ := json.Marshal(m)
+
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(data))
 	if err != nil {
 		return err
 	}
@@ -28,9 +41,17 @@ func (c *Client) SendCounter(name string, value int64) error {
 }
 
 func (c *Client) SendGauge(name string, value float64) error {
-	url := fmt.Sprintf("%s/update/gauge/%s/%f", c.baseURL, name, value)
-	url = strings.TrimRight(url, "/")
-	resp, err := http.Post(url, "", nil)
+	url := fmt.Sprintf("%s/update/", c.baseURL)
+
+	m := dto.Metrics{
+		ID:    name,
+		MType: "gauge",
+		Value: &value,
+	}
+
+	data, _ := json.Marshal(m)
+
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(data))
 	if err != nil {
 		return err
 	}
