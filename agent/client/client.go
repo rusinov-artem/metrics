@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/rusinov-artem/metrics/dto"
-	"github.com/rusinov-artem/metrics/h"
 )
 
 type Client struct {
@@ -28,7 +27,7 @@ func (c *Client) SendCounter(name string, value int64) error {
 	m := dto.Metrics{
 		ID:    name,
 		MType: "counter",
-		Delta: h.Ptr(value),
+		Delta: &value,
 	}
 
 	data, _ := json.Marshal(m)
@@ -47,7 +46,7 @@ func (c *Client) SendGauge(name string, value float64) error {
 	m := dto.Metrics{
 		ID:    name,
 		MType: "gauge",
-		Value: h.Ptr(value),
+		Value: &value,
 	}
 
 	data, _ := json.Marshal(m)
