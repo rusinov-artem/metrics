@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"bytes"
+	"io"
 	"net/http"
 	"time"
 
@@ -31,6 +32,8 @@ func (r *ResponseSpy) WriteHeader(statusCode int) {
 var Logger = func(logger *zap.Logger) Middleware {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			reqBody, _ := io.ReadAll(r.Body)
+			r.Body = io.NopCloser(bytes.NewBuffer(reqBody))
 			start := time.Now()
 			spy := &ResponseSpy{w: w}
 			h.ServeHTTP(spy, r)
@@ -38,6 +41,8 @@ var Logger = func(logger *zap.Logger) Middleware {
 			logger.Info("handling request",
 				zap.String("method", r.Method),
 				zap.String("url", r.URL.String()),
+				zap.String("req.body", string(reqBody)),
+				zap.String("resp.body", spy.body.String()),
 				zap.Duration("duration", dur),
 				zap.Int("statusCode", spy.statusCode),
 				zap.Int("size", spy.body.Len()),
