@@ -18,10 +18,18 @@ import (
 var runServer = func(cfg *config.Config) {
 	logger, _ := zap.NewDevelopment()
 	router := router.New()
-	handler.New(metrics.NewInMemory()).RegisterIn(router)
+	storage, destructor := metrics.NewBufferedFileStorage(
+		logger,
+		cfg.FileStoragePath,
+		cfg.Restore,
+		cfg.StoreInterval,
+	)
+	defer destructor()
+	handler.New(storage).RegisterIn(router)
 	router.AddMiddleware(middleware.Logger(logger))
 	router.AddMiddleware(middleware.GzipEncoder())
 	server.New(router.Mux(), cfg.Address).Run()
+
 }
 
 func NewServerCmd() *cobra.Command {
