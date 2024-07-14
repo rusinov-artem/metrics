@@ -8,9 +8,9 @@ import (
 	"github.com/rusinov-artem/metrics/cmd/server/config"
 	"github.com/rusinov-artem/metrics/server"
 	"github.com/rusinov-artem/metrics/server/handler"
-	"github.com/rusinov-artem/metrics/server/metrics"
 	"github.com/rusinov-artem/metrics/server/middleware"
 	"github.com/rusinov-artem/metrics/server/router"
+	"github.com/rusinov-artem/metrics/server/storage"
 
 	"github.com/spf13/cobra"
 )
@@ -18,7 +18,7 @@ import (
 var runServer = func(cfg *config.Config) {
 	logger, _ := zap.NewDevelopment()
 	router := router.New()
-	storage, destructor := metrics.NewBufferedFileStorage(
+	storage, destructor := storage.NewBufferedFileStorage(
 		logger,
 		cfg.FileStoragePath,
 		cfg.Restore,

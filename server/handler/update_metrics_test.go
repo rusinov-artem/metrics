@@ -9,14 +9,14 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
-	"github.com/rusinov-artem/metrics/server/metrics"
 	"github.com/rusinov-artem/metrics/server/middleware"
 	"github.com/rusinov-artem/metrics/server/router"
+	"github.com/rusinov-artem/metrics/server/storage"
 )
 
 type UpdateMetricsTestSuite struct {
 	suite.Suite
-	metrics *metrics.InMemoryMetrics
+	metrics *storage.InMemoryMetrics
 	handler http.Handler
 }
 
@@ -25,7 +25,7 @@ func TestUpdateMetricsTestSuite(t *testing.T) {
 }
 
 func (s *UpdateMetricsTestSuite) SetupTest() {
-	s.metrics = metrics.NewInMemory()
+	s.metrics = storage.NewInMemory()
 	handlerFn := New(s.metrics).UpdateMetrics
 	r := router.New()
 	r.AddMiddleware(middleware.Logger(zap.NewNop()))
