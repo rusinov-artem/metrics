@@ -4,6 +4,7 @@ RUN apt update ; apt install -y git make jq curl vim htop tmux ncat iputils-ping
 
 RUN go install github.com/go-delve/delve/cmd/dlv@latest &&\
     go install github.com/amobe/gocov-merger@latest &&\
-    go install github.com/nikolaydubina/go-cover-treemap@v1.4.2
+    go install github.com/nikolaydubina/go-cover-treemap@v1.4.2 &&\
+    go install github.com/pressly/goose/v3/cmd/goose@latest
 
 WORKDIR /app

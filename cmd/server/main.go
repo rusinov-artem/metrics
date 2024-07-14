@@ -3,8 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/stdlib"
+	"github.com/pressly/goose/v3"
 	"go.uber.org/zap"
 
 	"github.com/rusinov-artem/metrics/cmd/server/config"
@@ -31,7 +34,10 @@ var runServer = func(cfg *config.Config) {
 	dbpool, err := pgxpool.New(context.Background(), cfg.DatabaseDsn)
 	if err != nil {
 		logger.Error("unable to connect to database", zap.Error(err))
+	} else {
+		migrate(logger, dbpool)
 	}
+	defer dbpool.Close()
 
 	handler.New(storage, dbpool).RegisterIn(router)
 	router.AddMiddleware(middleware.Logger(logger))
@@ -60,5 +66,24 @@ func main() {
 	err := NewServerCmd().Execute()
 	if err != nil {
 		fmt.Println(err)
+	}
+}
+
+func migrate(log *zap.Logger, pool *pgxpool.Pool) {
+	db := stdlib.OpenDBFromPool(pool)
+	if err := goose.SetDialect("pgx"); err != nil {
+		log.Error("goose: unable to set dialect", zap.Error(err))
+	}
+
+	dir, err := os.Getwd()
+	if err != nil {
+		log.Error("goose: unable get current working directory", zap.Error(err))
+	}
+
+	log.Info("goose: migrations dir", zap.String("dir", dir))
+
+	err = goose.Up(db, "./server/migration")
+	if err != nil {
+		log.Error("goose: unable to run migration", zap.Error(err))
 	}
 }
