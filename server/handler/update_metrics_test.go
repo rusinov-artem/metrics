@@ -26,7 +26,7 @@ func TestUpdateMetricsTestSuite(t *testing.T) {
 
 func (s *UpdateMetricsTestSuite) SetupTest() {
 	s.metrics = storage.NewInMemory()
-	handlerFn := New(s.metrics).UpdateMetrics
+	handlerFn := New(s.metrics, nil).UpdateMetrics
 	r := router.New()
 	r.AddMiddleware(middleware.Logger(zap.NewNop()))
 	r.RegisterMetricsUpdate(handlerFn)

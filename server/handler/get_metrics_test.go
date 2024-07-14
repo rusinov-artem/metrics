@@ -25,7 +25,7 @@ func TestMetricsGetter(t *testing.T) {
 
 func (s *MetricsGetterTestSuite) SetupTest() {
 	s.metrics = storage.NewInMemory()
-	handlerFn := New(s.metrics).GetMetrics
+	handlerFn := New(s.metrics, nil).GetMetrics
 	r := router.New()
 	r.RegisterMetricsGetter(handlerFn)
 	s.handler = r.Mux()

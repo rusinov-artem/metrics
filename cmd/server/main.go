@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 
 	"github.com/rusinov-artem/metrics/cmd/server/config"
@@ -25,7 +27,13 @@ var runServer = func(cfg *config.Config) {
 		cfg.StoreInterval,
 	)
 	defer destructor()
-	handler.New(storage).RegisterIn(router)
+
+	dbpool, err := pgxpool.New(context.Background(), cfg.DatabaseDsn)
+	if err != nil {
+		logger.Error("unable to connect to database", zap.Error(err))
+	}
+
+	handler.New(storage, dbpool).RegisterIn(router)
 	router.AddMiddleware(middleware.Logger(logger))
 	router.AddMiddleware(middleware.GzipEncoder())
 	server.New(router.Mux(), cfg.Address).Run()
