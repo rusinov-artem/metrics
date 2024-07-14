@@ -24,7 +24,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		_ = h.metricsStorage.SetCounter(m.ID, *m.Delta)
+		_ = h.metricsStorage.SetCounter(r.Context(), m.ID, *m.Delta)
 		_ = e.Encode(m)
 		return
 	}
@@ -37,7 +37,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		_ = h.metricsStorage.SetGauge(m.ID, *m.Value)
+		_ = h.metricsStorage.SetGauge(r.Context(), m.ID, *m.Value)
 		_ = e.Encode(m)
 		return
 	}

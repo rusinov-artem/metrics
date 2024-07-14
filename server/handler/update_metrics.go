@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"strconv"
@@ -9,11 +10,11 @@ import (
 )
 
 type MetricsStorage interface {
-	SetCounter(name string, value int64) error
-	SetGauge(name string, value float64) error
+	SetCounter(ctx context.Context, name string, value int64) error
+	SetGauge(ctx context.Context, name string, value float64) error
 
-	GetCounter(name string) (int64, error)
-	GetGauge(name string) (float64, error)
+	GetCounter(ctx context.Context, name string) (int64, error)
+	GetGauge(ctx context.Context, name string) (float64, error)
 }
 
 func (h *Handler) UpdateMetrics(w http.ResponseWriter, r *http.Request) {
@@ -27,7 +28,7 @@ func (h *Handler) UpdateMetrics(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		_ = h.metricsStorage.SetCounter(metricName, v)
+		_ = h.metricsStorage.SetCounter(r.Context(), metricName, v)
 		w.WriteHeader(http.StatusOK)
 		log.Printf("updated counter '%s' = %d", metricName, v)
 		return
@@ -41,7 +42,7 @@ func (h *Handler) UpdateMetrics(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		_ = h.metricsStorage.SetGauge(metricName, v)
+		_ = h.metricsStorage.SetGauge(r.Context(), metricName, v)
 		w.WriteHeader(http.StatusOK)
 		log.Printf("updated gauge '%s' = %f", metricName, v)
 		return

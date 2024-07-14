@@ -12,7 +12,7 @@ func (h *Handler) GetMetrics(w http.ResponseWriter, r *http.Request) {
 	metricType := chi.URLParam(r, "type")
 	metricName := chi.URLParam(r, "name")
 	if metricType == "counter" {
-		v, err := h.metricsStorage.GetCounter(metricName)
+		v, err := h.metricsStorage.GetCounter(r.Context(), metricName)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			return
@@ -24,7 +24,7 @@ func (h *Handler) GetMetrics(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if metricType == "gauge" {
-		v, err := h.metricsStorage.GetGauge(metricName)
+		v, err := h.metricsStorage.GetGauge(r.Context(), metricName)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			return

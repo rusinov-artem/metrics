@@ -17,7 +17,7 @@ func (h *Handler) Value(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if m.MType == "counter" {
-		v, err := h.metricsStorage.GetCounter(m.ID)
+		v, err := h.metricsStorage.GetCounter(r.Context(), m.ID)
 		if err != nil {
 			http.Error(w, "counter not found", http.StatusNotFound)
 			return
@@ -32,7 +32,7 @@ func (h *Handler) Value(w http.ResponseWriter, r *http.Request) {
 
 	if m.MType == "gauge" {
 
-		v, err := h.metricsStorage.GetGauge(m.ID)
+		v, err := h.metricsStorage.GetGauge(r.Context(), m.ID)
 		if err != nil {
 			http.Error(w, "gauge not found", http.StatusNotFound)
 			return
