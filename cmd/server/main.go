@@ -3,19 +3,33 @@ package main
 import (
 	"fmt"
 
+	"go.uber.org/zap"
+
 	"github.com/rusinov-artem/metrics/cmd/server/config"
 	"github.com/rusinov-artem/metrics/server"
 	"github.com/rusinov-artem/metrics/server/handler"
-	"github.com/rusinov-artem/metrics/server/metrics"
+	"github.com/rusinov-artem/metrics/server/middleware"
 	"github.com/rusinov-artem/metrics/server/router"
+	"github.com/rusinov-artem/metrics/server/storage"
 
 	"github.com/spf13/cobra"
 )
 
 var runServer = func(cfg *config.Config) {
+	logger, _ := zap.NewDevelopment()
 	router := router.New()
-	handler.New(metrics.NewInMemory()).RegisterIn(router)
+	storage, destructor := storage.NewBufferedFileStorage(
+		logger,
+		cfg.FileStoragePath,
+		cfg.Restore,
+		cfg.StoreInterval,
+	)
+	defer destructor()
+	handler.New(storage).RegisterIn(router)
+	router.AddMiddleware(middleware.Logger(logger))
+	router.AddMiddleware(middleware.GzipEncoder())
 	server.New(router.Mux(), cfg.Address).Run()
+
 }
 
 func NewServerCmd() *cobra.Command {

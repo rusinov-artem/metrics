@@ -9,13 +9,13 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/rusinov-artem/metrics/server/metrics"
 	"github.com/rusinov-artem/metrics/server/router"
+	"github.com/rusinov-artem/metrics/server/storage"
 )
 
 type MetricsGetterTestSuite struct {
 	suite.Suite
-	metrics *metrics.InMemoryMetrics
+	metrics *storage.InMemoryMetrics
 	handler http.Handler
 }
 
@@ -24,7 +24,7 @@ func TestMetricsGetter(t *testing.T) {
 }
 
 func (s *MetricsGetterTestSuite) SetupTest() {
-	s.metrics = metrics.NewInMemory()
+	s.metrics = storage.NewInMemory()
 	handlerFn := New(s.metrics).GetMetrics
 	r := router.New()
 	r.RegisterMetricsGetter(handlerFn)
