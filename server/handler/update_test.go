@@ -31,7 +31,7 @@ func TestUpdateTestSuite(t *testing.T) {
 
 func (s *UpdateTestSuite) SetupTest() {
 	s.metrics = storage.NewInMemory()
-	handlerFn := New(s.metrics, nil).Update
+	handlerFn := New(nil, s.metrics, nil).Update
 	r := router.New()
 	r.AddMiddleware(middleware.Logger(zap.NewNop()))
 	r.AddMiddleware(middleware.GzipEncoder())

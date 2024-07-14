@@ -2,17 +2,20 @@ package handler
 
 import (
 	"github.com/jackc/pgx/v5/pgxpool"
+	"go.uber.org/zap"
 
 	"github.com/rusinov-artem/metrics/server/router"
 )
 
 type Handler struct {
+	logger         *zap.Logger
 	metricsStorage MetricsStorage
 	dbPool         *pgxpool.Pool
 }
 
-func New(metrics MetricsStorage, dbpool *pgxpool.Pool) *Handler {
+func New(logger *zap.Logger, metrics MetricsStorage, dbpool *pgxpool.Pool) *Handler {
 	h := &Handler{
+		logger:         logger,
 		metricsStorage: metrics,
 		dbPool:         dbpool,
 	}

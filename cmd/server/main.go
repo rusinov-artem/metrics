@@ -21,9 +21,13 @@ import (
 )
 
 var runServer = func(cfg *config.Config) {
+	var err error
+	var metricsStorage handler.MetricsStorage
+	var dbpool *pgxpool.Pool
+
 	logger, _ := zap.NewDevelopment()
 	router := router.New()
-	storage, destructor := storage.NewBufferedFileStorage(
+	metricsStorage, destructor := storage.NewBufferedFileStorage(
 		logger,
 		cfg.FileStoragePath,
 		cfg.Restore,
@@ -31,15 +35,19 @@ var runServer = func(cfg *config.Config) {
 	)
 	defer destructor()
 
-	dbpool, err := pgxpool.New(context.Background(), cfg.DatabaseDsn)
-	if err != nil {
-		logger.Error("unable to connect to database", zap.Error(err))
-	} else {
-		migrate(logger, dbpool)
-	}
-	defer dbpool.Close()
+	if cfg.DatabaseDsn != "" {
+		dbpool, err = pgxpool.New(context.Background(), cfg.DatabaseDsn)
+		if err != nil {
+			logger.Error("unable to connect to database", zap.Error(err))
+		} else {
+			migrate(logger, dbpool)
+		}
+		defer dbpool.Close()
 
-	handler.New(storage, dbpool).RegisterIn(router)
+		metricsStorage = storage.NewPgxStorage(dbpool)
+	}
+
+	handler.New(logger, metricsStorage, dbpool).RegisterIn(router)
 	router.AddMiddleware(middleware.Logger(logger))
 	router.AddMiddleware(middleware.GzipEncoder())
 	server.New(router.Mux(), cfg.Address).Run()
