@@ -53,6 +53,10 @@ func (t *Router) RegisterPing(h http.HandlerFunc) {
 	t.mux.Method(http.MethodGet, "/ping", h)
 }
 
+func (t *Router) RegisterUpdates(h http.HandlerFunc) {
+	t.mux.Method(http.MethodPost, "/updates/", h)
+}
+
 func (t *Router) withMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.middleware(h).ServeHTTP(w, r)

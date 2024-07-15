@@ -62,6 +62,14 @@ func (c *Config) FromCli(cmd *cobra.Command) *Config {
 			true,
 			"enable restore on server start",
 		)
+	} else {
+		cmd.Flags().BoolVarP(
+			&c.Restore,
+			"restore on start",
+			"r",
+			false,
+			"enable restore on server start",
+		)
 	}
 
 	if c.DatabaseDsn == "" {

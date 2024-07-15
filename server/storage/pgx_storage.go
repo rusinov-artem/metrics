@@ -20,7 +20,7 @@ func (p *PgxStorage) SetCounter(ctx context.Context, name string, value int64) e
 	sql := `
 		INSERT INTO counter (name, value) 
                          VALUES ($1, $2) 
-       ON CONFLICT (name) DO UPDATE SET value = $3
+       ON CONFLICT (name) DO UPDATE SET value = counter.value + $3
 	`
 	_, err := p.pool.Exec(ctx, sql, name, value, value)
 	return err
@@ -28,7 +28,7 @@ func (p *PgxStorage) SetCounter(ctx context.Context, name string, value int64) e
 
 func (p *PgxStorage) SetGauge(ctx context.Context, name string, value float64) error {
 	sql := `
-		INSERT INTO couge (name, value) 
+		INSERT INTO gauge (name, value) 
                          VALUES ($1, $2) 
        ON CONFLICT (name) DO UPDATE SET value = $3
 	`

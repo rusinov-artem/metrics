@@ -31,5 +31,6 @@ func (h *Handler) RegisterIn(r *router.Router) *Handler {
 	r.RegisterValue(h.Value)
 	r.RegisterInfo(h.Info)
 	r.RegisterPing(h.Ping)
+	r.RegisterUpdates(h.Updates)
 	return h
 }
