@@ -3,10 +3,12 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/rusinov-artem/metrics/dto"
+	serverError "github.com/rusinov-artem/metrics/server/error"
 )
 
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
@@ -19,8 +21,16 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := h.updateSingleMetric(r.Context(), m)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	var invalidRequest serverError.InvalidRequest
+	if errors.As(err, &invalidRequest) {
+		http.Error(w, invalidRequest.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var internal serverError.Internal
+	if errors.As(err, &internal) {
+		http.Error(w, invalidRequest.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -31,21 +41,29 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) updateSingleMetric(ctx context.Context, m *dto.Metrics) error {
 	if m.MType == "counter" {
 		if m.Delta == nil {
-			return fmt.Errorf("counter value must be set")
+			return serverError.InvalidRequest{Msg: "counter must contain delta field"}
 		}
 
-		_ = h.metricsStorage.SetCounter(ctx, m.ID, *m.Delta)
+		err := h.metricsStorage.SetCounter(ctx, m.ID, *m.Delta)
+		if err != nil {
+			return serverError.Internal{InnerErr: err, Msg: "unable to set counter"}
+		}
+
 		return nil
 	}
 
 	if m.MType == "gauge" {
 		if m.Value == nil {
-			return fmt.Errorf("counter value must be set")
+			return serverError.InvalidRequest{Msg: "gauge must contain value field"}
 		}
 
-		_ = h.metricsStorage.SetGauge(ctx, m.ID, *m.Value)
+		err := h.metricsStorage.SetGauge(ctx, m.ID, *m.Value)
+		if err != nil {
+			return serverError.Internal{InnerErr: err, Msg: "unable to set gauge"}
+		}
+
 		return nil
 	}
 
-	return fmt.Errorf("unknown metric type: %s", m.MType)
+	return serverError.InvalidRequest{Msg: fmt.Sprintf("unknown metric type: %s", m.MType)}
 }

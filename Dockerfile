@@ -8,3 +8,7 @@ RUN go install github.com/go-delve/delve/cmd/dlv@latest &&\
     go install github.com/pressly/goose/v3/cmd/goose@latest
 
 WORKDIR /app
+
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
