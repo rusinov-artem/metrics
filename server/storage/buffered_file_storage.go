@@ -76,11 +76,11 @@ func NewBufferedFileStorage(logger *zap.Logger, path string, restore bool, inter
 	return o, destructor
 }
 
-func (b *BufferedFileStorage) SetCounter(ctx context.Context, name string, value int64) error {
+func (b *BufferedFileStorage) SetCounter(name string, value int64) error {
 	b.Lock()
 	defer b.Unlock()
 
-	err := b.metrics.SetCounter(ctx, name, value)
+	err := b.metrics.SetCounter(name, value)
 	if err != nil {
 		return err
 	}
@@ -92,11 +92,11 @@ func (b *BufferedFileStorage) SetCounter(ctx context.Context, name string, value
 	return nil
 }
 
-func (b *BufferedFileStorage) SetGauge(ctx context.Context, name string, value float64) error {
+func (b *BufferedFileStorage) SetGauge(name string, value float64) error {
 	b.Lock()
 	defer b.Unlock()
 
-	err := b.metrics.SetGauge(ctx, name, value)
+	err := b.metrics.SetGauge(name, value)
 	if err != nil {
 		return err
 	}
@@ -106,6 +106,10 @@ func (b *BufferedFileStorage) SetGauge(ctx context.Context, name string, value f
 	}
 
 	return nil
+}
+
+func (b *BufferedFileStorage) Flush(_ context.Context) error {
+	return b.DumpToFile()
 }
 
 func (b *BufferedFileStorage) GetCounter(ctx context.Context, name string) (int64, error) {

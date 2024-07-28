@@ -20,5 +20,6 @@ create table counter
 
 -- +goose Down
 -- +goose StatementBegin
-SELECT 'down SQL query';
+drop table if exists counter;
+drop table if exists gauge
 -- +goose StatementEnd

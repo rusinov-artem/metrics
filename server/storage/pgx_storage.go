@@ -5,41 +5,50 @@ import (
 	"time"
 
 	"github.com/avast/retry-go/v4"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type PgxStorage struct {
-	pool *pgxpool.Pool
+	pool  *pgxpool.Pool
+	batch *pgx.Batch
 }
 
 func NewPgxStorage(pool *pgxpool.Pool) *PgxStorage {
-	return &PgxStorage{
-		pool: pool,
+	pgxStorage := &PgxStorage{
+		pool:  pool,
+		batch: &pgx.Batch{},
 	}
+	return pgxStorage
 }
 
-func (p *PgxStorage) SetCounter(ctx context.Context, name string, value int64) error {
+func (p *PgxStorage) SetCounter(name string, value int64) error {
 	sql := `
 		INSERT INTO counter (name, value) 
                          VALUES ($1, $2) 
-       ON CONFLICT (name) DO UPDATE SET value = counter.value + $3
+       ON CONFLICT (name) DO UPDATE SET value = counter.value + excluded.value
 	`
-	return do(ctx, func() error {
-		_, err := p.pool.Exec(ctx, sql, name, value, value)
-		return err
-	})
+	p.batch.Queue(sql, name, value)
+
+	return nil
 }
 
-func (p *PgxStorage) SetGauge(ctx context.Context, name string, value float64) error {
+func (p *PgxStorage) SetGauge(name string, value float64) error {
 	sql := `
 		INSERT INTO gauge (name, value) 
                          VALUES ($1, $2) 
-       ON CONFLICT (name) DO UPDATE SET value = $3
+       ON CONFLICT (name) DO UPDATE SET value = excluded.value
 	`
-	return do(ctx, func() error {
-		_, err := p.pool.Exec(ctx, sql, name, value, value)
-		return err
-	})
+	p.batch.Queue(sql, name, value)
+
+	return nil
+}
+
+func (p *PgxStorage) Flush(ctx context.Context) error {
+	result := p.pool.SendBatch(ctx, p.batch)
+	err := result.Close()
+	p.batch = &pgx.Batch{}
+	return err
 }
 
 func (p *PgxStorage) GetCounter(ctx context.Context, name string) (int64, error) {
@@ -87,25 +96,4 @@ func do(ctx context.Context, fn func() error) error {
 			return 10 * time.Second
 		}),
 	)
-}
-
-type backOff struct {
-	counter int
-}
-
-func (t *backOff) Next() (next time.Duration, stop bool) {
-	t.counter++
-	if t.counter == 1 {
-		return time.Second, true
-	}
-
-	if t.counter == 2 {
-		return 3 * time.Second, true
-	}
-
-	if t.counter == 2 {
-		return 3 * time.Second, true
-	}
-
-	return time.Second, false
 }

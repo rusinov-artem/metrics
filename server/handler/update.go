@@ -1,11 +1,12 @@
 package handler
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+
+	"go.uber.org/zap"
 
 	"github.com/rusinov-artem/metrics/dto"
 	serverError "github.com/rusinov-artem/metrics/server/error"
@@ -20,7 +21,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.updateSingleMetric(r.Context(), m)
+	err := h.updateSingleMetric(m)
 	var invalidRequest serverError.InvalidRequest
 	if errors.As(err, &invalidRequest) {
 		http.Error(w, invalidRequest.Error(), http.StatusBadRequest)
@@ -33,18 +34,25 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = h.metricsStorage.Flush(r.Context())
+	if err != nil {
+		h.logger.Error("unable to flush storage", zap.Error(err))
+		http.Error(w, invalidRequest.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = e.Encode(m)
 }
 
-func (h *Handler) updateSingleMetric(ctx context.Context, m *dto.Metrics) error {
+func (h *Handler) updateSingleMetric(m *dto.Metrics) error {
 	if m.MType == "counter" {
 		if m.Delta == nil {
 			return serverError.InvalidRequest{Msg: "counter must contain delta field"}
 		}
 
-		err := h.metricsStorage.SetCounter(ctx, m.ID, *m.Delta)
+		err := h.metricsStorage.SetCounter(m.ID, *m.Delta)
 		if err != nil {
 			return serverError.Internal{InnerErr: err, Msg: "unable to set counter"}
 		}
@@ -57,7 +65,7 @@ func (h *Handler) updateSingleMetric(ctx context.Context, m *dto.Metrics) error 
 			return serverError.InvalidRequest{Msg: "gauge must contain value field"}
 		}
 
-		err := h.metricsStorage.SetGauge(ctx, m.ID, *m.Value)
+		err := h.metricsStorage.SetGauge(m.ID, *m.Value)
 		if err != nil {
 			return serverError.Internal{InnerErr: err, Msg: "unable to set gauge"}
 		}

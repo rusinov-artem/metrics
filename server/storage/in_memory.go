@@ -19,14 +19,14 @@ func NewInMemory() *InMemoryMetrics {
 	}
 }
 
-func (t *InMemoryMetrics) SetCounter(_ context.Context, name string, value int64) error {
+func (t *InMemoryMetrics) SetCounter(name string, value int64) error {
 	t.Lock()
 	defer t.Unlock()
 	t.Counter[name] += value
 	return nil
 }
 
-func (t *InMemoryMetrics) SetGauge(_ context.Context, name string, value float64) error {
+func (t *InMemoryMetrics) SetGauge(name string, value float64) error {
 	t.Lock()
 	defer t.Unlock()
 	t.Gauge[name] = value
@@ -49,4 +49,8 @@ func (t *InMemoryMetrics) GetCounter(_ context.Context, name string) (int64, err
 	}
 
 	return v, nil
+}
+
+func (t *InMemoryMetrics) Flush(_ context.Context) error {
+	return nil
 }
