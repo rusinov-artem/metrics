@@ -10,6 +10,9 @@ import (
 )
 
 func (h *Handler) Updates(w http.ResponseWriter, r *http.Request) {
+	ctx, cancelFN := h.context(r.Context())
+	defer cancelFN()
+
 	m := &[]dto.Metrics{}
 	d := json.NewDecoder(r.Body)
 	if err := d.Decode(m); err != nil {
@@ -32,7 +35,7 @@ func (h *Handler) Updates(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	err := h.metricsStorage.Flush(r.Context())
+	err := h.metricsStorage.Flush(ctx)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

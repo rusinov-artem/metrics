@@ -13,6 +13,9 @@ import (
 )
 
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
+	ctx, cancelFN := h.context(r.Context())
+	defer cancelFN()
+
 	m := &dto.Metrics{}
 	d := json.NewDecoder(r.Body)
 	e := json.NewEncoder(w)
@@ -34,7 +37,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.metricsStorage.Flush(r.Context())
+	err = h.metricsStorage.Flush(ctx)
 	if err != nil {
 		h.logger.Error("unable to flush storage", zap.Error(err))
 		http.Error(w, invalidRequest.Error(), http.StatusInternalServerError)

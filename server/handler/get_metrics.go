@@ -9,10 +9,12 @@ import (
 )
 
 func (h *Handler) GetMetrics(w http.ResponseWriter, r *http.Request) {
+	ctx, cancelFN := h.context(r.Context())
+	defer cancelFN()
 	metricType := chi.URLParam(r, "type")
 	metricName := chi.URLParam(r, "name")
 	if metricType == "counter" {
-		v, err := h.metricsStorage.GetCounter(r.Context(), metricName)
+		v, err := h.metricsStorage.GetCounter(ctx, metricName)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			return
@@ -24,7 +26,7 @@ func (h *Handler) GetMetrics(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if metricType == "gauge" {
-		v, err := h.metricsStorage.GetGauge(r.Context(), metricName)
+		v, err := h.metricsStorage.GetGauge(ctx, metricName)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			return
