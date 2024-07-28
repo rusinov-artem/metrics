@@ -14,9 +14,10 @@ func Test_CanHandleCommandLineArgs(t *testing.T) {
 		assert.Equal(t, "test_address", cfg.Address)
 		assert.Equal(t, 60, cfg.PollInterval)
 		assert.Equal(t, 90, cfg.ReportInterval)
+		assert.Equal(t, "some_key", cfg.Key)
 	}
 	cmd := NewAgent()
-	cmd.SetArgs([]string{"", "-a", "test_address", "-p", "60", "-r", "90"})
+	cmd.SetArgs([]string{"", "-a", "test_address", "-p", "60", "-r", "90", "-k", "some_key"})
 	err := cmd.Execute()
 	assert.NoError(t, err)
 }
@@ -25,10 +26,12 @@ func Test_CanGetValuesFromEnv(t *testing.T) {
 	_ = os.Setenv("ADDRESS", "test_address")
 	_ = os.Setenv("POLL_INTERVAL", "60")
 	_ = os.Setenv("REPORT_INTERVAL", "90")
+	_ = os.Setenv("KEY", "some_key_from_env")
 	runAgent = func(cfg *config.Config) {
 		assert.Equal(t, "test_address", cfg.Address)
 		assert.Equal(t, 60, cfg.PollInterval)
 		assert.Equal(t, 90, cfg.ReportInterval)
+		assert.Equal(t, "some_key_from_env", cfg.Key)
 	}
 	cmd := NewAgent()
 	err := cmd.Execute()

@@ -2,6 +2,9 @@ package client
 
 import (
 	"bytes"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -15,6 +18,7 @@ import (
 
 type Client struct {
 	baseURL string
+	Key     string
 }
 
 func New(baseURL string) *Client {
@@ -25,8 +29,6 @@ func New(baseURL string) *Client {
 }
 
 func (c *Client) SendCounter(name string, value int64) error {
-	url := fmt.Sprintf("%s/update/", c.baseURL)
-
 	m := dto.Metrics{
 		ID:    name,
 		MType: "counter",
@@ -35,11 +37,10 @@ func (c *Client) SendCounter(name string, value int64) error {
 
 	data, _ := json.Marshal(m)
 
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
+	req, err := c.newRequest(data)
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Accept-Encoding", "gzip")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -50,8 +51,6 @@ func (c *Client) SendCounter(name string, value int64) error {
 }
 
 func (c *Client) SendGauge(name string, value float64) error {
-	url := fmt.Sprintf("%s/update/", c.baseURL)
-
 	m := dto.Metrics{
 		ID:    name,
 		MType: "gauge",
@@ -60,12 +59,10 @@ func (c *Client) SendGauge(name string, value float64) error {
 
 	data, _ := json.Marshal(m)
 
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
+	req, err := c.newRequest(data)
 	if err != nil {
 		return err
 	}
-
-	req.Header.Set("Accept-Encoding", "gzip")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -74,6 +71,29 @@ func (c *Client) SendGauge(name string, value float64) error {
 
 	_ = resp.Body.Close()
 	return err
+}
+
+func (c *Client) newRequest(data []byte) (*http.Request, error) {
+	url := fmt.Sprintf("%s/update/", c.baseURL)
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept-Encoding", "gzip")
+
+	if c.Key == "" {
+		return req, nil
+	}
+
+	hm := hmac.New(sha256.New, []byte(c.Key))
+	hm.Write(data)
+	sum := hm.Sum(nil)
+
+	hash := base64.StdEncoding.EncodeToString(sum)
+	req.Header.Set("HashSHA256", hash)
+
+	return req, nil
+
 }
 
 func Do(fn func() error) error {

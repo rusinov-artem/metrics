@@ -17,6 +17,7 @@ type Config struct {
 	DatabaseDsn     string
 	Restore         bool
 	RestoreString   string
+	Key             string
 }
 
 func New(cmd *cobra.Command) *Config {
@@ -82,6 +83,14 @@ func (c *Config) FromCli(cmd *cobra.Command) *Config {
 		)
 	}
 
+	cmd.Flags().StringVarP(
+		&c.Key,
+		"hash key",
+		"k",
+		os.Getenv("KEY"),
+		"hash key to check request sign",
+	)
+
 	c.Restore, _ = stringToBool(c.RestoreString)
 
 	return c
@@ -90,48 +99,56 @@ func (c *Config) FromCli(cmd *cobra.Command) *Config {
 func fromEnv() *Config {
 	cfg := &Config{
 		Address: func() string {
-			addr := os.Getenv("ADDRESS")
-			if addr != "" {
+			v := os.Getenv("ADDRESS")
+			if v != "" {
 				log.Println("Got ADDRESS env variable")
 			}
-			return addr
+			return v
 		}(),
 
 		StoreInterval: func() int {
-			interval := os.Getenv("STORE_INTERVAL")
+			v := os.Getenv("STORE_INTERVAL")
 			val := 0
-			if interval != "" {
-				val, _ = strconv.Atoi(interval)
+			if v != "" {
+				val, _ = strconv.Atoi(v)
 				log.Println("Got STORE_INTERVAL env variable")
 			}
 			return val
 		}(),
 
 		FileStoragePath: func() string {
-			path := os.Getenv("FILE_STORAGE_PATH")
-			if path != "" {
+			v := os.Getenv("FILE_STORAGE_PATH")
+			if v != "" {
 				log.Println("Got FILE_STORAGE_PATH env variable")
 			}
-			return path
+			return v
 		}(),
 
 		RestoreString: func() string {
-			e := os.Getenv("RESTORE")
-			if e == "" {
+			v := os.Getenv("RESTORE")
+			if v == "" {
 				return ""
 			}
 
-			_, s := stringToBool(e)
+			_, s := stringToBool(v)
 			return s
 
 		}(),
 
 		DatabaseDsn: func() string {
-			e := os.Getenv("DATABASE_DSN")
-			if e != "" {
+			v := os.Getenv("DATABASE_DSN")
+			if v != "" {
 				log.Println("Got DATABASE_DSN env variable")
 			}
-			return e
+			return v
+		}(),
+
+		Key: func() string {
+			v := os.Getenv("KEY")
+			if v != "" {
+				log.Printf("Got KEY = %s\n", v)
+			}
+			return v
 		}(),
 	}
 

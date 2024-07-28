@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 
 	"github.com/rusinov-artem/metrics/agent"
 	"github.com/rusinov-artem/metrics/agent/client"
@@ -15,6 +16,11 @@ import (
 var runAgent = func(cfg *config.Config) {
 	ctx := context.Background()
 	client := client.New(fmt.Sprintf("http://%s", cfg.Address))
+	client.Key = cfg.Key
+
+	logger, _ := zap.NewDevelopment()
+	logger.Info("config", zap.Any("config", cfg))
+
 	agent.New(
 		client,
 		time.Second*time.Duration(cfg.PollInterval),
@@ -24,7 +30,7 @@ var runAgent = func(cfg *config.Config) {
 
 func NewAgent() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "Best metrics project ever",
+		Use:   "Agent of best metrics project ever",
 		Short: "Run agent to send metrics",
 		Long:  "Run agent to send metrics",
 	}
