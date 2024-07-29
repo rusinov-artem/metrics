@@ -32,17 +32,31 @@ var Sign = func(logger *zap.Logger, key string) Middleware {
 			reqBody, _ := io.ReadAll(r.Body)
 			r.Body = io.NopCloser(bytes.NewBuffer(reqBody))
 
-			hm := hmac.New(sha256.New, []byte(key))
-			hm.Write(reqBody)
-			sign := hm.Sum(nil)
-			if !hmac.Equal(sign, hash) {
+			bKey := []byte(key)
+			bSign := sign(reqBody, bKey)
+			if !hmac.Equal(bSign, hash) {
 				err := fmt.Errorf("HashSHA256 verification failed")
 				logger.Error(err.Error(), zap.Error(err))
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
 
-			h.ServeHTTP(w, r)
+			spy := &ResponseSpy{w: w}
+			h.ServeHTTP(spy, r)
+			w.Header().Set("HashSHA256", encode(sign(spy.body.Bytes(), bKey)))
+			w.WriteHeader(spy.statusCode)
+			_, _ = w.Write(spy.body.Bytes())
+
 		})
 	}
+}
+
+func sign(source []byte, key []byte) []byte {
+	hm := hmac.New(sha256.New, key)
+	hm.Write(source)
+	return hm.Sum(nil)
+}
+
+func encode(b []byte) string {
+	return base64.StdEncoding.EncodeToString(b)
 }
