@@ -2,12 +2,20 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 
+	"go.uber.org/zap"
+
 	"github.com/rusinov-artem/metrics/dto"
+	serverError "github.com/rusinov-artem/metrics/server/error"
 )
 
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
+	ctx, cancelFN := h.context(r.Context())
+	defer cancelFN()
+
 	m := &dto.Metrics{}
 	d := json.NewDecoder(r.Body)
 	e := json.NewEncoder(w)
@@ -16,31 +24,57 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err := h.updateSingleMetric(m)
+	var invalidRequest serverError.InvalidRequest
+	if errors.As(err, &invalidRequest) {
+		http.Error(w, invalidRequest.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var internal serverError.Internal
+	if errors.As(err, &internal) {
+		http.Error(w, invalidRequest.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = h.metricsStorage.Flush(ctx)
+	if err != nil {
+		h.logger.Error("unable to flush storage", zap.Error(err))
+		http.Error(w, invalidRequest.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = e.Encode(m)
+}
+
+func (h *Handler) updateSingleMetric(m *dto.Metrics) error {
 	if m.MType == "counter" {
 		if m.Delta == nil {
-			http.Error(w, "counter value must be set", http.StatusBadRequest)
-			return
+			return serverError.InvalidRequest{Msg: "counter must contain delta field"}
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_ = h.metricsStorage.SetCounter(m.ID, *m.Delta)
-		_ = e.Encode(m)
-		return
+		err := h.metricsStorage.SetCounter(m.ID, *m.Delta)
+		if err != nil {
+			return serverError.Internal{InnerErr: err, Msg: "unable to set counter"}
+		}
+
+		return nil
 	}
 
 	if m.MType == "gauge" {
 		if m.Value == nil {
-			http.Error(w, "counter value must be set", http.StatusBadRequest)
-			return
+			return serverError.InvalidRequest{Msg: "gauge must contain value field"}
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_ = h.metricsStorage.SetGauge(m.ID, *m.Value)
-		_ = e.Encode(m)
-		return
+		err := h.metricsStorage.SetGauge(m.ID, *m.Value)
+		if err != nil {
+			return serverError.Internal{InnerErr: err, Msg: "unable to set gauge"}
+		}
+
+		return nil
 	}
 
-	http.Error(w, "unknown metric type", http.StatusBadRequest)
+	return serverError.InvalidRequest{Msg: fmt.Sprintf("unknown metric type: %s", m.MType)}
 }

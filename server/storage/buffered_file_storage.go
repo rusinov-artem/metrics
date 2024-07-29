@@ -108,16 +108,20 @@ func (b *BufferedFileStorage) SetGauge(name string, value float64) error {
 	return nil
 }
 
-func (b *BufferedFileStorage) GetCounter(name string) (int64, error) {
-	b.Lock()
-	defer b.Unlock()
-	return b.metrics.GetCounter(name)
+func (b *BufferedFileStorage) Flush(_ context.Context) error {
+	return b.DumpToFile()
 }
 
-func (b *BufferedFileStorage) GetGauge(name string) (float64, error) {
+func (b *BufferedFileStorage) GetCounter(ctx context.Context, name string) (int64, error) {
 	b.Lock()
 	defer b.Unlock()
-	return b.metrics.GetGauge(name)
+	return b.metrics.GetCounter(ctx, name)
+}
+
+func (b *BufferedFileStorage) GetGauge(ctx context.Context, name string) (float64, error) {
+	b.Lock()
+	defer b.Unlock()
+	return b.metrics.GetGauge(ctx, name)
 }
 
 func (b *BufferedFileStorage) DumpToFile() error {

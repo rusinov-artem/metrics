@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 	"sync"
 )
@@ -32,7 +33,7 @@ func (t *InMemoryMetrics) SetGauge(name string, value float64) error {
 	return nil
 }
 
-func (t *InMemoryMetrics) GetGauge(name string) (float64, error) {
+func (t *InMemoryMetrics) GetGauge(_ context.Context, name string) (float64, error) {
 	v, ok := t.Gauge[name]
 	if !ok {
 		return 0.0, fmt.Errorf("gauge '%s' not found", name)
@@ -41,11 +42,15 @@ func (t *InMemoryMetrics) GetGauge(name string) (float64, error) {
 	return v, nil
 }
 
-func (t *InMemoryMetrics) GetCounter(name string) (int64, error) {
+func (t *InMemoryMetrics) GetCounter(_ context.Context, name string) (int64, error) {
 	v, ok := t.Counter[name]
 	if !ok {
 		return 0.0, fmt.Errorf("counter '%s' not found", name)
 	}
 
 	return v, nil
+}
+
+func (t *InMemoryMetrics) Flush(_ context.Context) error {
+	return nil
 }

@@ -14,6 +14,7 @@ type Config struct {
 	Address         string
 	StoreInterval   int
 	FileStoragePath string
+	DatabaseDsn     string
 	Restore         bool
 	RestoreString   string
 }
@@ -61,6 +62,24 @@ func (c *Config) FromCli(cmd *cobra.Command) *Config {
 			true,
 			"enable restore on server start",
 		)
+	} else {
+		cmd.Flags().BoolVarP(
+			&c.Restore,
+			"restore on start",
+			"r",
+			false,
+			"enable restore on server start",
+		)
+	}
+
+	if c.DatabaseDsn == "" {
+		cmd.Flags().StringVarP(
+			&c.DatabaseDsn,
+			"database dsn",
+			"d",
+			"",
+			"enable restore on server start",
+		)
 	}
 
 	c.Restore, _ = stringToBool(c.RestoreString)
@@ -105,6 +124,14 @@ func fromEnv() *Config {
 			_, s := stringToBool(e)
 			return s
 
+		}(),
+
+		DatabaseDsn: func() string {
+			e := os.Getenv("DATABASE_DSN")
+			if e != "" {
+				log.Println("Got DATABASE_DSN env variable")
+			}
+			return e
 		}(),
 	}
 

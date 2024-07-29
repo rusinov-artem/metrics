@@ -43,6 +43,7 @@ func (t *Server) Run() {
 		}
 	}()
 
+	// Вот тут обработка сигналов
 	s := make(chan os.Signal, 1)
 	signal.Notify(s, syscall.SIGTERM, syscall.SIGINT)
 	<-s

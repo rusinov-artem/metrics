@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
+
+	"github.com/avast/retry-go/v4"
 
 	"github.com/rusinov-artem/metrics/dto"
 )
@@ -71,4 +74,20 @@ func (c *Client) SendGauge(name string, value float64) error {
 
 	_ = resp.Body.Close()
 	return err
+}
+
+func Do(fn func() error) error {
+	return retry.Do(
+		fn,
+		retry.Attempts(3),
+		retry.DelayType(func(n uint, err error, config *retry.Config) time.Duration {
+			if n == 1 {
+				return time.Second
+			}
+			if n == 2 {
+				return 3 * time.Second
+			}
+			return 5 * time.Second
+		}),
+	)
 }

@@ -1,0 +1,32 @@
+services:
+  metrics-app:
+    container_name: metrics-app
+    image: rusinov/metrics-app
+    working_dir: /app
+    volumes:
+      - "./:/app"
+    env_file:
+      - .env
+    build:
+      dockerfile: Dockerfile
+
+  metrics-db:
+    container_name: metrics-db
+    image: postgres:16
+    volumes:
+      - data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -h127.0.0.1 -Umetrics" ]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=metrics
+      - POSTGRES_USER=metrics
+      - POSTGRES_DB=metrics
+      - PGDATA=/var/lib/postgresql/data
+
+volumes:
+  data: { }
