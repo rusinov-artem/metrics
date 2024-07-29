@@ -22,7 +22,7 @@ func (s *AgentTestSuite) SetupTest() {
 }
 
 func (s *AgentTestSuite) Test_CreateAgent() {
-	agent := New(s.client, 10*time.Millisecond, 100*time.Millisecond)
+	agent := New(s.client, 10*time.Millisecond, 100*time.Millisecond, 10)
 	ctx, closeFn := context.WithTimeout(context.Background(), 2*time.Second)
 	defer closeFn()
 	agent.Run(ctx)

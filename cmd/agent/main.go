@@ -25,6 +25,7 @@ var runAgent = func(cfg *config.Config) {
 		client,
 		time.Second*time.Duration(cfg.PollInterval),
 		time.Second*time.Duration(cfg.ReportInterval),
+		cfg.RateLimit,
 	).Run(ctx)
 }
 

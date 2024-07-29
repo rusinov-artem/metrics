@@ -48,7 +48,7 @@ var runServer = func(cfg *config.Config) {
 	logger.Info("config", zap.Any("config", cfg))
 
 	handler.New(logger, metricsStorage, dbpool).RegisterIn(router)
-	router.AddMiddleware(middleware.Sign(logger, cfg.Key))
+	// router.AddMiddleware(middleware.Sign(logger, cfg.Key))
 	router.AddMiddleware(middleware.Logger(logger))
 	router.AddMiddleware(middleware.GzipEncoder())
 	server.New(router.Mux(), cfg.Address).Run()

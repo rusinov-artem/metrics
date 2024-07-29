@@ -13,6 +13,7 @@ type Config struct {
 	PollInterval   int
 	ReportInterval int
 	Key            string
+	RateLimit      int
 }
 
 func New(cmd *cobra.Command) *Config {
@@ -33,6 +34,10 @@ func (c *Config) FromCli(cmd *cobra.Command) *Config {
 	}
 
 	cmd.Flags().StringVarP(&c.Key, "key", "k", os.Getenv("KEY"), "key to sign request")
+
+	if c.RateLimit == 0 {
+		cmd.Flags().IntVarP(&c.RateLimit, "rate_limit", "l", 10, "rate limit")
+	}
 
 	return c
 }
@@ -69,6 +74,15 @@ func fromEnv() *Config {
 				log.Printf("Got KEY = %s\n", v)
 			}
 			return v
+		}(),
+
+		RateLimit: func() int {
+			v := os.Getenv("RATE_LIMIT")
+			if v != "" {
+				log.Printf("Got RATE_LIMIT = %s\n", v)
+			}
+			val, _ := strconv.Atoi(v)
+			return val
 		}(),
 	}
 }
