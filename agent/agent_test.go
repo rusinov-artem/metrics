@@ -2,6 +2,7 @@ package agent
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
@@ -33,13 +34,18 @@ func (s *AgentTestSuite) Test_CreateAgent() {
 type FakeClient struct {
 	sendCounterExecuted int
 	sendGuageExecuted   int
+	sync.Mutex
 }
 
 func (f *FakeClient) SendCounter(name string, value int64) error {
+	f.Lock()
+	defer f.Unlock()
 	f.sendCounterExecuted++
 	return nil
 }
 func (f *FakeClient) SendGauge(name string, value float64) error {
+	f.Lock()
+	defer f.Unlock()
 	f.sendGuageExecuted++
 	return nil
 }

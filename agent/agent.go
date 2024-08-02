@@ -85,20 +85,24 @@ func (t *Agent) send() {
 
 	wg := &sync.WaitGroup{}
 
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
+		wg.Add(len(t.counter))
 		for name, value := range t.counter {
 			p.Run(func() {
-				wg.Add(1)
 				defer wg.Done()
 				_ = t.client.SendCounter(name, value)
 			})
 		}
 	}()
 
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
+		wg.Add(len(t.gauge))
 		for name, value := range t.gauge {
 			p.Run(func() {
-				wg.Add(1)
 				defer wg.Done()
 				_ = t.client.SendGauge(name, value)
 			})
