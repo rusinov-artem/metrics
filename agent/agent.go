@@ -5,6 +5,9 @@ import (
 	"runtime"
 	"sync"
 	"time"
+
+	"github.com/shirou/gopsutil/v4/load"
+	"github.com/shirou/gopsutil/v4/mem"
 )
 
 type Client interface {
@@ -20,15 +23,28 @@ type Agent struct {
 	gauge          map[string]float64
 	counter        map[string]int64
 	inc            int64
+	rateLimit      int
 }
 
-func New(client Client, pollInterval, reportInterval time.Duration) *Agent {
+func New(client Client, pollInterval, reportInterval time.Duration, rateLimit int) *Agent {
+	defaultRateLimit := 10
+	maxRateLimit := 50
+
+	if rateLimit == 0 {
+		rateLimit = defaultRateLimit
+	}
+
+	if rateLimit > maxRateLimit {
+		rateLimit = maxRateLimit
+	}
+
 	return &Agent{
 		client:         client,
 		pollInterval:   pollInterval,
 		reportInterval: reportInterval,
 		counter:        make(map[string]int64),
 		gauge:          make(map[string]float64),
+		rateLimit:      rateLimit,
 	}
 }
 
@@ -64,13 +80,32 @@ func (t *Agent) send() {
 	t.Lock()
 	defer t.Unlock()
 
-	for name, value := range t.counter {
-		_ = t.client.SendCounter(name, value)
-	}
+	p := NewWorkerPool(t.rateLimit)
+	defer p.Close()
 
-	for name, value := range t.gauge {
-		_ = t.client.SendGauge(name, value)
-	}
+	wg := &sync.WaitGroup{}
+
+	go func() {
+		for name, value := range t.counter {
+			p.Run(func() {
+				wg.Add(1)
+				defer wg.Done()
+				_ = t.client.SendCounter(name, value)
+			})
+		}
+	}()
+
+	go func() {
+		for name, value := range t.gauge {
+			p.Run(func() {
+				wg.Add(1)
+				defer wg.Done()
+				_ = t.client.SendGauge(name, value)
+			})
+		}
+	}()
+
+	wg.Wait()
 }
 
 func (t *Agent) updateMetricsLoop(ctx context.Context) {
@@ -118,6 +153,17 @@ func (t *Agent) update() {
 	t.gauge["StackSys"] = float64(m.StackSys)
 	t.gauge["Sys"] = float64(m.Sys)
 	t.gauge["TotalAlloc"] = float64(m.TotalAlloc)
+
+	vm, err := mem.VirtualMemory()
+	if err == nil {
+		t.gauge["TotalMemory"] = float64(vm.Total)
+		t.gauge["FreeMemory"] = float64(vm.Free)
+	}
+
+	c, err := load.Avg()
+	if err == nil {
+		t.gauge["CPUutilization1"] = c.Load1
+	}
 
 	t.counter["PollCount"] = t.inc + 100
 	t.gauge["RandomValue"] = 42.342 * float64(t.inc)

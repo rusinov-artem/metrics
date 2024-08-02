@@ -45,7 +45,10 @@ var runServer = func(cfg *config.Config) {
 		metricsStorage = storage.NewPgxStorage(dbpool)
 	}
 
+	logger.Info("config", zap.Any("config", cfg))
+
 	handler.New(logger, metricsStorage, dbpool).RegisterIn(router)
+	// router.AddMiddleware(middleware.Sign(logger, cfg.Key))
 	router.AddMiddleware(middleware.Logger(logger))
 	router.AddMiddleware(middleware.GzipEncoder())
 	server.New(router.Mux(), cfg.Address).Run()
@@ -54,7 +57,7 @@ var runServer = func(cfg *config.Config) {
 
 func NewServerCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "Best metrics project ever",
+		Use:   "Server of best metrics project ever",
 		Short: "Run server on port 8080",
 		Long:  "Run metrics collector server on port 8080",
 	}
