@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -10,19 +11,23 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 type Server struct {
 	Srv     *http.Server
 	address string
+	logger  *zap.Logger
 }
 
-func New(h http.Handler, address string) *Server {
+func New(logger *zap.Logger, h http.Handler, address string) *Server {
 	return &Server{
 		Srv: &http.Server{
 			Handler: h,
 		},
 		address: address,
+		logger:  logger,
 	}
 }
 
@@ -31,7 +36,7 @@ func (t *Server) Run() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Printf("Server started on '%s'", t.address)
+	t.logger.Info(fmt.Sprintf("Server started on '%s'", t.address))
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
@@ -46,14 +51,14 @@ func (t *Server) Run() {
 	// Вот тут обработка сигналов
 	s := make(chan os.Signal, 1)
 	signal.Notify(s, syscall.SIGTERM, syscall.SIGINT)
-	<-s
+	t.logger.Info((<-s).String())
 
 	ctx, closeFn := context.WithTimeout(context.Background(), 5*time.Second)
 	defer closeFn()
 	err = t.Srv.Shutdown(ctx)
 	if err != nil {
-		log.Println(err)
+		t.logger.Error(err.Error(), zap.Error(err))
 	}
 	wg.Wait()
-	log.Println("Server stopped")
+	t.logger.Info("Server stopped")
 }

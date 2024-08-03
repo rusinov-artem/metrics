@@ -32,6 +32,9 @@ var runServer = func(cfg *config.Config) {
 		cfg.StoreInterval,
 	)
 	defer destructor()
+	metricsStorageFactory := func() handler.MetricsStorage {
+		return metricsStorage
+	}
 
 	if cfg.DatabaseDsn != "" {
 		dbpool, err = pgxpool.New(context.Background(), cfg.DatabaseDsn)
@@ -40,18 +43,23 @@ var runServer = func(cfg *config.Config) {
 		} else {
 			migration.Migrate(logger, dbpool)
 		}
-		defer dbpool.Close()
+		defer func() {
+			dbpool.Reset()
+			dbpool.Close()
+		}()
 
-		metricsStorage = storage.NewPgxStorage(dbpool)
+		metricsStorageFactory = func() handler.MetricsStorage {
+			return storage.NewPgxStorage(dbpool)
+		}
 	}
 
-	logger.Info("config", zap.Any("config", cfg))
+	logger = logger.With(zap.Any("config", cfg))
 
-	handler.New(logger, metricsStorage, dbpool).RegisterIn(router)
+	handler.New(logger, metricsStorageFactory, dbpool).RegisterIn(router)
 	// router.AddMiddleware(middleware.Sign(logger, cfg.Key))
 	router.AddMiddleware(middleware.Logger(logger))
 	router.AddMiddleware(middleware.GzipEncoder())
-	server.New(router.Mux(), cfg.Address).Run()
+	server.New(logger, router.Mux(), cfg.Address).Run()
 
 }
 

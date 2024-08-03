@@ -13,6 +13,8 @@ func (h *Handler) Updates(w http.ResponseWriter, r *http.Request) {
 	ctx, cancelFN := h.context(r.Context())
 	defer cancelFN()
 
+	metricsStorage := h.metricsStorageFactory()
+
 	m := &[]dto.Metrics{}
 	d := json.NewDecoder(r.Body)
 	if err := d.Decode(m); err != nil {
@@ -21,7 +23,7 @@ func (h *Handler) Updates(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for i := range *m {
-		err := h.updateSingleMetric(&(*m)[i])
+		err := h.updateSingleMetric(metricsStorage, &(*m)[i])
 		var internalError serverError.Internal
 		if errors.As(err, &internalError) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -35,7 +37,7 @@ func (h *Handler) Updates(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	err := h.metricsStorage.Flush(ctx)
+	err := metricsStorage.Flush(ctx)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -8,6 +8,11 @@ import (
 )
 
 func (h *Handler) Value(w http.ResponseWriter, r *http.Request) {
+	ctx, cancelFN := h.context(r.Context())
+	defer cancelFN()
+
+	metricsStorage := h.metricsStorageFactory()
+
 	m := &dto.Metrics{}
 	d := json.NewDecoder(r.Body)
 	e := json.NewEncoder(w)
@@ -17,7 +22,7 @@ func (h *Handler) Value(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if m.MType == "counter" {
-		v, err := h.metricsStorage.GetCounter(r.Context(), m.ID)
+		v, err := metricsStorage.GetCounter(ctx, m.ID)
 		if err != nil {
 			http.Error(w, "counter not found", http.StatusNotFound)
 			return
@@ -31,8 +36,7 @@ func (h *Handler) Value(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if m.MType == "gauge" {
-
-		v, err := h.metricsStorage.GetGauge(r.Context(), m.ID)
+		v, err := metricsStorage.GetGauge(ctx, m.ID)
 		if err != nil {
 			http.Error(w, "gauge not found", http.StatusNotFound)
 			return

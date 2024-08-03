@@ -8,16 +8,16 @@ import (
 )
 
 type Handler struct {
-	logger         *zap.Logger
-	metricsStorage MetricsStorage
-	dbPool         *pgxpool.Pool
+	logger                *zap.Logger
+	metricsStorageFactory func() MetricsStorage
+	dbPool                *pgxpool.Pool
 }
 
-func New(logger *zap.Logger, metrics MetricsStorage, dbpool *pgxpool.Pool) *Handler {
+func New(logger *zap.Logger, metricsStorageFactory func() MetricsStorage, dbpool *pgxpool.Pool) *Handler {
 	h := &Handler{
-		logger:         logger,
-		metricsStorage: metrics,
-		dbPool:         dbpool,
+		logger:                logger,
+		metricsStorageFactory: metricsStorageFactory,
+		dbPool:                dbpool,
 	}
 
 	return h

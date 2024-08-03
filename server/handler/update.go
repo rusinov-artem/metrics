@@ -16,6 +16,8 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx, cancelFN := h.context(r.Context())
 	defer cancelFN()
 
+	metricsStorage := h.metricsStorageFactory()
+
 	m := &dto.Metrics{}
 	d := json.NewDecoder(r.Body)
 	e := json.NewEncoder(w)
@@ -24,7 +26,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.updateSingleMetric(m)
+	err := h.updateSingleMetric(metricsStorage, m)
 	var invalidRequest serverError.InvalidRequest
 	if errors.As(err, &invalidRequest) {
 		http.Error(w, invalidRequest.Error(), http.StatusBadRequest)
@@ -37,7 +39,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.metricsStorage.Flush(ctx)
+	err = metricsStorage.Flush(ctx)
 	if err != nil {
 		h.logger.Error("unable to flush storage", zap.Error(err))
 		http.Error(w, invalidRequest.Error(), http.StatusInternalServerError)
@@ -49,13 +51,13 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	_ = e.Encode(m)
 }
 
-func (h *Handler) updateSingleMetric(m *dto.Metrics) error {
+func (h *Handler) updateSingleMetric(storage MetricsStorage, m *dto.Metrics) error {
 	if m.MType == "counter" {
 		if m.Delta == nil {
 			return serverError.InvalidRequest{Msg: "counter must contain delta field"}
 		}
 
-		err := h.metricsStorage.SetCounter(m.ID, *m.Delta)
+		err := storage.SetCounter(m.ID, *m.Delta)
 		if err != nil {
 			return serverError.Internal{InnerErr: err, Msg: "unable to set counter"}
 		}
@@ -68,7 +70,7 @@ func (h *Handler) updateSingleMetric(m *dto.Metrics) error {
 			return serverError.InvalidRequest{Msg: "gauge must contain value field"}
 		}
 
-		err := h.metricsStorage.SetGauge(m.ID, *m.Value)
+		err := storage.SetGauge(m.ID, *m.Value)
 		if err != nil {
 			return serverError.Internal{InnerErr: err, Msg: "unable to set gauge"}
 		}
