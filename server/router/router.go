@@ -3,20 +3,33 @@ package router
 import (
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
-
 	"github.com/rusinov-artem/metrics/server/middleware"
 )
 
+type Mux interface {
+	Method(method, pattern string, handler http.Handler)
+	ServeHTTP(http.ResponseWriter, *http.Request)
+}
+
+type Handler interface {
+	GetMetrics(http.ResponseWriter, *http.Request)
+	UpdateMetrics(http.ResponseWriter, *http.Request)
+	Liveness(http.ResponseWriter, *http.Request)
+	Update(http.ResponseWriter, *http.Request)
+	Value(http.ResponseWriter, *http.Request)
+	Info(http.ResponseWriter, *http.Request)
+	Ping(http.ResponseWriter, *http.Request)
+	Updates(http.ResponseWriter, *http.Request)
+}
+
 type Router struct {
-	mux        *chi.Mux
+	mux        Mux
 	middleware middleware.Middleware
 }
 
-func New() *Router {
-	mux := chi.NewRouter()
+func New(m Mux) *Router {
 	return &Router{
-		mux:        mux,
+		mux:        m,
 		middleware: middleware.Nop,
 	}
 }
@@ -65,4 +78,16 @@ func (t *Router) withMiddleware(h http.Handler) http.Handler {
 
 func (t *Router) Mux() http.Handler {
 	return t.withMiddleware(t.mux)
+}
+
+func (t *Router) SetHandler(h Handler) *Router {
+	t.RegisterMetricsGetter(h.GetMetrics)
+	t.RegisterMetricsUpdate(h.UpdateMetrics)
+	t.RegisterLiveness(h.Liveness)
+	t.RegisterUpdate(h.Update)
+	t.RegisterValue(h.Value)
+	t.RegisterInfo(h.Info)
+	t.RegisterPing(h.Ping)
+	t.RegisterUpdates(h.Updates)
+	return t
 }

@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/rusinov-artem/metrics/server/router"
@@ -29,7 +30,7 @@ func (s *MetricsGetterTestSuite) SetupTest() {
 		return s.metrics
 	}
 	handlerFn := New(nil, metricsFactory, nil).GetMetrics
-	r := router.New()
+	r := router.New(chi.NewRouter())
 	r.RegisterMetricsGetter(handlerFn)
 	s.handler = r.Mux()
 }

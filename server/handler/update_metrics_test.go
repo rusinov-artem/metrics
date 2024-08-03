@@ -6,6 +6,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
@@ -30,7 +31,7 @@ func (s *UpdateMetricsTestSuite) SetupTest() {
 		return s.metrics
 	}
 	handlerFn := New(nil, metricsFactory, nil).UpdateMetrics
-	r := router.New()
+	r := router.New(chi.NewRouter())
 	r.AddMiddleware(middleware.Logger(zap.NewNop()))
 	r.RegisterMetricsUpdate(handlerFn)
 	s.handler = r.Mux()

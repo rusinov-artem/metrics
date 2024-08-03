@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
@@ -31,7 +32,7 @@ func (s *UpdatesTestSuite) SetupTest() {
 		return s.metrics
 	}
 	handlerFn := New(nil, metricsFactory, nil).Updates
-	r := router.New()
+	r := router.New(chi.NewRouter())
 	r.AddMiddleware(middleware.Logger(zap.NewNop()))
 	r.AddMiddleware(middleware.GzipEncoder())
 	r.RegisterUpdate(handlerFn)

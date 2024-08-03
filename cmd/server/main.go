@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 
@@ -24,7 +25,6 @@ var runServer = func(cfg *config.Config) {
 	var dbpool *pgxpool.Pool
 
 	logger, _ := zap.NewDevelopment()
-	router := router.New()
 	metricsStorage, destructor := storage.NewBufferedFileStorage(
 		logger,
 		cfg.FileStoragePath,
@@ -55,7 +55,8 @@ var runServer = func(cfg *config.Config) {
 
 	logger = logger.With(zap.Any("config", cfg))
 
-	handler.New(logger, metricsStorageFactory, dbpool).RegisterIn(router)
+	handler := handler.New(logger, metricsStorageFactory, dbpool)
+	router := router.New(chi.NewRouter()).SetHandler(handler)
 	// router.AddMiddleware(middleware.Sign(logger, cfg.Key))
 	router.AddMiddleware(middleware.Logger(logger))
 	router.AddMiddleware(middleware.GzipEncoder())
