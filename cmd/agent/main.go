@@ -11,6 +11,9 @@ import (
 	"github.com/rusinov-artem/metrics/agent"
 	"github.com/rusinov-artem/metrics/agent/client"
 	"github.com/rusinov-artem/metrics/cmd/agent/config"
+
+	"net/http"
+	_ "net/http/pprof"
 )
 
 var runAgent = func(cfg *config.Config) {
@@ -46,6 +49,7 @@ func NewAgent() *cobra.Command {
 }
 
 func main() {
+	go http.ListenAndServe(":9999", nil)
 	err := NewAgent().Execute()
 	if err != nil {
 		fmt.Println(err)

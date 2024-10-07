@@ -17,6 +17,9 @@ import (
 	"github.com/rusinov-artem/metrics/server/storage"
 
 	"github.com/spf13/cobra"
+
+	"net/http"
+	_ "net/http/pprof"
 )
 
 var runServer = func(cfg *config.Config) {
@@ -81,6 +84,8 @@ func NewServerCmd() *cobra.Command {
 }
 
 func main() {
+	go http.ListenAndServe(":9898", nil)
+
 	err := NewServerCmd().Execute()
 	if err != nil {
 		fmt.Println(err)
