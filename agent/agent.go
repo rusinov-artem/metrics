@@ -15,17 +15,24 @@ type Client interface {
 	SendGauge(name string, value float64) error
 }
 
+// Agent в фоне отправляет метрики приложения на сервер
 type Agent struct {
 	sync.Mutex
-	client         Client
-	pollInterval   time.Duration
+	client Client
+
+	// pollInterval интервал когда метрика обновляется
+	pollInterval time.Duration
+
+	// reporInterval интервал с которым метрика отправляется на сервер
 	reportInterval time.Duration
-	gauge          map[string]float64
-	counter        map[string]int64
-	inc            int64
-	rateLimit      int
+
+	gauge     map[string]float64
+	counter   map[string]int64
+	inc       int64
+	rateLimit int
 }
 
+// New создает Agent
 func New(client Client, pollInterval, reportInterval time.Duration, rateLimit int) *Agent {
 	defaultRateLimit := 10
 	maxRateLimit := 50
@@ -48,6 +55,7 @@ func New(client Client, pollInterval, reportInterval time.Duration, rateLimit in
 	}
 }
 
+// Run запускает отправку метрик приложения на сервер
 func (t *Agent) Run(ctx context.Context) {
 	wg := &sync.WaitGroup{}
 	wg.Add(2)

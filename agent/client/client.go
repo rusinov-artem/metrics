@@ -16,11 +16,14 @@ import (
 	"github.com/rusinov-artem/metrics/dto"
 )
 
+// Client Структура которая позваляет засчитывать метрики
+// Для создания этой структуры используйте функцию New
 type Client struct {
 	baseURL string
 	Key     string
 }
 
+// New Создает структуру, которая позволяет отправлять метрики
 func New(baseURL string) *Client {
 	baseURL = strings.TrimSuffix(baseURL, "/")
 	return &Client{
@@ -28,6 +31,8 @@ func New(baseURL string) *Client {
 	}
 }
 
+// SendCounter отправляет значение метрики типа counter
+// отправленное значение прибавляется к уже существующему
 func (c *Client) SendCounter(name string, value int64) error {
 	m := dto.Metrics{
 		ID:    name,
@@ -50,6 +55,7 @@ func (c *Client) SendCounter(name string, value int64) error {
 	return err
 }
 
+// SendGauge отправляет значение метрики типа gauge
 func (c *Client) SendGauge(name string, value float64) error {
 	m := dto.Metrics{
 		ID:    name,

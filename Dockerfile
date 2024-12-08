@@ -1,4 +1,4 @@
-FROM golang:1.22
+FROM golang:1.22.2
 
 RUN apt update ; apt install -y git make jq curl vim htop ncat iputils-ping net-tools;
 
