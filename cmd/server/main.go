@@ -22,6 +22,10 @@ import (
 	_ "net/http/pprof"
 )
 
+var buildVersion = "N/A"
+var buildDate = "N/A"
+var buildCommit = "N/A"
+
 var runServer = func(cfg *config.Config) {
 	var err error
 	var metricsStorage handler.MetricsStorage
@@ -84,6 +88,10 @@ func NewServerCmd() *cobra.Command {
 }
 
 func main() {
+	fmt.Printf("Build version: %s\n", buildVersion)
+	fmt.Printf("Build date: %s\n", buildDate)
+	fmt.Printf("Build commit: %s\n", buildCommit)
+
 	go http.ListenAndServe(":9898", nil)
 
 	err := NewServerCmd().Execute()
