@@ -1,6 +1,10 @@
 package config
 
 import (
+	"encoding/json"
+	"flag"
+	"fmt"
+	"io"
 	"log"
 	"os"
 	"slices"
@@ -9,6 +13,13 @@ import (
 
 	"github.com/spf13/cobra"
 )
+
+const defaultAddress = "localhost:8080"
+const defaultRestore = true
+const defaultStoreInterval = 300
+const defaultStoreFile = "/tmp/metrics-db.json"
+const defaultDatabaseDsn = ""
+const defaultCryptoKey = ""
 
 type Config struct {
 	Address         string
@@ -19,19 +30,59 @@ type Config struct {
 	RestoreString   string
 	Key             string
 	CryptoKey       string
+	Config          string
 }
 
 func New(cmd *cobra.Command) *Config {
-	return fromEnv().FromCli(cmd)
+	var err error
+	fs := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+	jsonCfgFile := fs.String("config", os.Getenv("CONFIG"), "json config file")
+	cfg := (*Config)(nil)
+	if *jsonCfgFile != "" {
+		cfg, err = FromJSONFile(*jsonCfgFile)
+		if err != nil {
+			fmt.Printf("unable to fetch config from %q \n", *jsonCfgFile)
+		}
+	}
+
+	return fromEnv().FromCli(cmd).FromCustomSource(cfg)
+}
+
+func (c *Config) FromCustomSource(cfg *Config) *Config {
+	if cfg == nil {
+		return c
+	}
+
+	if c.Address == defaultAddress {
+		c.Address = cfg.Address
+	}
+
+	if c.StoreInterval == defaultStoreInterval {
+		c.StoreInterval = cfg.StoreInterval
+	}
+
+	if c.DatabaseDsn == defaultDatabaseDsn {
+		c.DatabaseDsn = cfg.DatabaseDsn
+	}
+
+	if c.CryptoKey == defaultCryptoKey {
+		c.CryptoKey = cfg.CryptoKey
+	}
+
+	return c
 }
 
 func (c *Config) FromCli(cmd *cobra.Command) *Config {
+	if c.Config == "" {
+		cmd.Flags().StringVarP(&c.Config, "config", "c", os.Getenv("CONFIG"), "json config file")
+	}
+
 	if c.Address == "" {
 		cmd.Flags().StringVarP(
 			&c.Address,
 			"address",
 			"a",
-			"0.0.0.0:8080",
+			defaultAddress,
 			"set address for server to listen on",
 		)
 	}
@@ -41,7 +92,7 @@ func (c *Config) FromCli(cmd *cobra.Command) *Config {
 			&c.StoreInterval,
 			"store interval",
 			"i",
-			300,
+			defaultStoreInterval,
 			"set store interval",
 		)
 	}
@@ -51,7 +102,7 @@ func (c *Config) FromCli(cmd *cobra.Command) *Config {
 			&c.FileStoragePath,
 			"file storage path",
 			"f",
-			"/tmp/metrics-db.json",
+			defaultStoreFile,
 			"set file storage path",
 		)
 	}
@@ -61,7 +112,7 @@ func (c *Config) FromCli(cmd *cobra.Command) *Config {
 			&c.Restore,
 			"restore on start",
 			"r",
-			true,
+			defaultRestore,
 			"enable restore on server start",
 		)
 	} else {
@@ -175,4 +226,41 @@ func stringToBool(e string) (bool, string) {
 	}
 
 	return false, "false"
+}
+func FromJSONFile(cfgFile string) (*Config, error) {
+	cfg := &Config{}
+	f, err := os.Open(cfgFile)
+	if err != nil {
+		return cfg, err
+	}
+
+	cfgData, err := io.ReadAll(f)
+	if err != nil {
+		return cfg, err
+	}
+
+	tmp := struct {
+		Address       string `json:"address"`
+		Restore       bool   `json:"restore"`
+		StoreInterval int    `json:"store_interval"`
+		StoreFile     string `json:"store_file"`
+		DatabaseDSN   string `json:"database_dsn"`
+		CryptoKey     string `json:"crypto_key"`
+	}{
+		Address:       defaultAddress,
+		Restore:       defaultRestore,
+		StoreInterval: defaultStoreInterval,
+		StoreFile:     defaultStoreFile,
+		DatabaseDSN:   defaultDatabaseDsn,
+		CryptoKey:     defaultCryptoKey,
+	}
+
+	err = json.Unmarshal(cfgData, &tmp)
+	if err != nil {
+		return cfg, err
+	}
+
+	cfg.Address = tmp.Address
+
+	return cfg, nil
 }

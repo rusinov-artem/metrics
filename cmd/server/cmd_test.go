@@ -23,6 +23,7 @@ func Test_CanHandleCommandLineArgs(t *testing.T) {
 		assert.False(t, cfg.Restore)
 		assert.Equal(t, "some_key", cfg.Key)
 		assert.Equal(t, "private.pem", cfg.CryptoKey)
+		assert.Equal(t, "config.json", cfg.Config)
 		fmt.Println(cfg)
 	}
 	cmd := NewServerCmd()
@@ -35,6 +36,7 @@ func Test_CanHandleCommandLineArgs(t *testing.T) {
 			"-d", "metrics-db:5432",
 			"-k", "some_key",
 			"--crypto-key", "private.pem",
+			"--config", "config.json",
 		},
 	)
 	err := cmd.Execute()
@@ -51,6 +53,7 @@ func Test_CanGetValuesFromEnv(t *testing.T) {
 	m.Set("DATABASE_DSN", "metrics-db:6432")
 	m.Set("KEY", "some_key_from_env")
 	m.Set("CRYPTO_KEY", "private.pem")
+	m.Set("CONFIG", "config.json")
 	runServer = func(cfg *config.Config) {
 		assert.Equal(t, "test_address", cfg.Address)
 		assert.Equal(t, 1234, cfg.StoreInterval)
@@ -59,6 +62,7 @@ func Test_CanGetValuesFromEnv(t *testing.T) {
 		assert.Equal(t, "some_key_from_env", cfg.Key)
 		assert.Equal(t, false, cfg.Restore)
 		assert.Equal(t, "private.pem", cfg.CryptoKey)
+		assert.Equal(t, "config.json", cfg.Config)
 	}
 	cmd := NewServerCmd()
 	err := cmd.Execute()
