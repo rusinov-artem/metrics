@@ -18,6 +18,7 @@ type Config struct {
 	Restore         bool
 	RestoreString   string
 	Key             string
+	CryptoKey       string
 }
 
 func New(cmd *cobra.Command) *Config {
@@ -81,6 +82,10 @@ func (c *Config) FromCli(cmd *cobra.Command) *Config {
 			"",
 			"enable restore on server start",
 		)
+	}
+
+	if c.CryptoKey == "" {
+		cmd.Flags().StringVar(&c.CryptoKey, "crypto-key", os.Getenv("CRYPTO_KEY"), "private key to decode messages")
 	}
 
 	cmd.Flags().StringVarP(

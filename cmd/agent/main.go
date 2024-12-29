@@ -76,7 +76,7 @@ func fetchPublicKey(publicKeyFile string) *rsa.PublicKey {
 
 	pemData, err := io.ReadAll(f)
 	if err != nil {
-		fmt.Printf("unable to open file %q: %v\n", publicKeyFile, err)
+		fmt.Printf("unable to read file %q: %v\n", publicKeyFile, err)
 		return nil
 	}
 

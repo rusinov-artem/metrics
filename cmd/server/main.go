@@ -2,7 +2,12 @@ package main
 
 import (
 	"context"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
+	"io"
+	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -62,9 +67,14 @@ var runServer = func(cfg *config.Config) {
 
 	logger = logger.With(zap.Any("config", cfg))
 
+	privateKey := fetchPrivateKey(cfg.CryptoKey)
+
 	handler := handler.New(logger, metricsStorageFactory, dbpool)
 	router := router.New(chi.NewRouter()).SetHandler(handler)
 	// router.AddMiddleware(middleware.Sign(logger, cfg.Key))
+	if privateKey != nil {
+		router.AddMiddleware(middleware.Decrypt(privateKey, logger))
+	}
 	router.AddMiddleware(middleware.Logger(logger))
 	router.AddMiddleware(middleware.GzipEncoder())
 	server.New(logger, router.Mux(), cfg.Address).Run()
@@ -98,4 +108,33 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+}
+
+func fetchPrivateKey(privateKeyFile string) *rsa.PrivateKey {
+	if privateKeyFile == "" {
+		return nil
+	}
+
+	fmt.Printf("%s will be used to decrypt data\n", privateKeyFile)
+
+	f, err := os.Open(privateKeyFile)
+	if err != nil {
+		fmt.Printf("unable to open file %q: %v\n", privateKeyFile, err)
+		return nil
+	}
+
+	pemData, err := io.ReadAll(f)
+	if err != nil {
+		fmt.Printf("unable to read file %q: %v\n", privateKeyFile, err)
+		return nil
+	}
+
+	block, _ := pem.Decode(pemData)
+	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		fmt.Printf("unable to parse privateKey from %q: %v\n", privateKeyFile, err)
+		return nil
+	}
+
+	return privateKey
 }
