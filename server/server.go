@@ -50,7 +50,7 @@ func (t *Server) Run() {
 
 	// Вот тут обработка сигналов
 	s := make(chan os.Signal, 1)
-	signal.Notify(s, syscall.SIGTERM, syscall.SIGINT)
+	signal.Notify(s, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 	t.logger.Info((<-s).String())
 
 	ctx, closeFn := context.WithTimeout(context.Background(), 5*time.Second)
