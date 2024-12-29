@@ -2,7 +2,12 @@ package main
 
 import (
 	"context"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
+	"io"
+	"os"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -18,7 +23,7 @@ import (
 
 var runAgent = func(cfg *config.Config) {
 	ctx := context.Background()
-	client := client.New(fmt.Sprintf("http://%s", cfg.Address))
+	client := client.New(fmt.Sprintf("http://%s", cfg.Address), fetchPublicKey(cfg.CryptoKey))
 	client.Key = cfg.Key
 
 	logger, _ := zap.NewDevelopment()
@@ -54,4 +59,33 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+}
+
+func fetchPublicKey(publicKeyFile string) *rsa.PublicKey {
+	if publicKeyFile == "" {
+		return nil
+	}
+
+	fmt.Printf("%s will be used to encrypt data\n", publicKeyFile)
+
+	f, err := os.Open(publicKeyFile)
+	if err != nil {
+		fmt.Printf("unable to open file %q: %v\n", publicKeyFile, err)
+		return nil
+	}
+
+	pemData, err := io.ReadAll(f)
+	if err != nil {
+		fmt.Printf("unable to open file %q: %v\n", publicKeyFile, err)
+		return nil
+	}
+
+	block, _ := pem.Decode(pemData)
+	publicKey, err := x509.ParsePKCS1PublicKey(block.Bytes)
+	if err != nil {
+		fmt.Printf("unable to parse publicKey from %q: %v\n", publicKeyFile, err)
+		return nil
+	}
+
+	return publicKey
 }

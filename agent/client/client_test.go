@@ -31,7 +31,7 @@ func (s *ClientTestSuite) SetupTest() {
 		s.body, _ = io.ReadAll(r.Body)
 	}))
 
-	s.client = New(fmt.Sprintf("http://%s", s.srv.Listener.Addr().String()))
+	s.client = New(fmt.Sprintf("http://%s", s.srv.Listener.Addr().String()), nil)
 }
 
 func (s *ClientTestSuite) TearDownTest() {
@@ -60,13 +60,13 @@ func (s *ClientTestSuite) Test_CanSendGauge() {
 }
 
 func (s *ClientTestSuite) Test_CanGetErrorOnSendGauge() {
-	client := New(fmt.Sprintf("http://%s", "bad_url"))
+	client := New(fmt.Sprintf("http://%s", "bad_url"), nil)
 	err := client.SendGauge("name", 0.42)
 	s.Error(err)
 }
 
 func (s *ClientTestSuite) Test_CanGetErrorOnSendCounter() {
-	client := New(fmt.Sprintf("http://%s", "bad_url"))
+	client := New(fmt.Sprintf("http://%s", "bad_url"), nil)
 	err := client.SendCounter("name", 33)
 	s.Error(err)
 }

@@ -14,6 +14,7 @@ type Config struct {
 	ReportInterval int
 	Key            string
 	RateLimit      int
+	CryptoKey      string
 }
 
 func New(cmd *cobra.Command) *Config {
@@ -37,6 +38,11 @@ func (c *Config) FromCli(cmd *cobra.Command) *Config {
 
 	if c.RateLimit == 0 {
 		cmd.Flags().IntVarP(&c.RateLimit, "rate_limit", "l", 10, "rate limit")
+	}
+
+	if c.CryptoKey == "" {
+		cmd.Flags().
+			StringVar(&c.CryptoKey, "crypto-key", os.Getenv("CRYPTO_KEY"), "public key to encrypt data")
 	}
 
 	return c
