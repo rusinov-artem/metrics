@@ -3,6 +3,8 @@ package client
 import (
 	"bytes"
 	"crypto/hmac"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
@@ -19,15 +21,17 @@ import (
 // Client Структура которая позваляет засчитывать метрики
 // Для создания этой структуры используйте функцию New
 type Client struct {
-	baseURL string
-	Key     string
+	baseURL   string
+	Key       string
+	publicKey *rsa.PublicKey
 }
 
 // New Создает структуру, которая позволяет отправлять метрики
-func New(baseURL string) *Client {
+func New(baseURL string, publicKey *rsa.PublicKey) *Client {
 	baseURL = strings.TrimSuffix(baseURL, "/")
 	return &Client{
-		baseURL: baseURL,
+		baseURL:   baseURL,
+		publicKey: publicKey,
 	}
 }
 
@@ -57,6 +61,8 @@ func (c *Client) SendCounter(name string, value int64) error {
 
 // SendGauge отправляет значение метрики типа gauge
 func (c *Client) SendGauge(name string, value float64) error {
+	var err error
+
 	m := dto.Metrics{
 		ID:    name,
 		MType: "gauge",
@@ -64,6 +70,12 @@ func (c *Client) SendGauge(name string, value float64) error {
 	}
 
 	data, _ := json.Marshal(m)
+	if c.publicKey != nil {
+		data, err = rsa.EncryptPKCS1v15(rand.Reader, c.publicKey, data)
+		if err != nil {
+			return err
+		}
+	}
 
 	req, err := c.newRequest(data)
 	if err != nil {

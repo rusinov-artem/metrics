@@ -16,6 +16,8 @@ func Test_CanHandleCommandLineArgs(t *testing.T) {
 		assert.Equal(t, 90, cfg.ReportInterval)
 		assert.Equal(t, 99, cfg.RateLimit)
 		assert.Equal(t, "some_key", cfg.Key)
+		assert.Equal(t, "public.pem", cfg.CryptoKey)
+		assert.Equal(t, "config.json", cfg.Config)
 	}
 	cmd := NewAgent()
 	cmd.SetArgs([]string{"",
@@ -24,6 +26,8 @@ func Test_CanHandleCommandLineArgs(t *testing.T) {
 		"-r", "90",
 		"-k", "some_key",
 		"-l", "99",
+		"--crypto-key", "public.pem",
+		"-c", "config.json",
 	})
 	err := cmd.Execute()
 	assert.NoError(t, err)
@@ -35,14 +39,19 @@ func Test_CanGetValuesFromEnv(t *testing.T) {
 	_ = os.Setenv("REPORT_INTERVAL", "90")
 	_ = os.Setenv("KEY", "some_key_from_env")
 	_ = os.Setenv("RATE_LIMIT", "100")
+	_ = os.Setenv("CRYPTO_KEY", "public.pem")
+	_ = os.Setenv("CONFIG", "config2.json")
 	runAgent = func(cfg *config.Config) {
 		assert.Equal(t, "test_address", cfg.Address)
 		assert.Equal(t, 60, cfg.PollInterval)
 		assert.Equal(t, 90, cfg.ReportInterval)
 		assert.Equal(t, "some_key_from_env", cfg.Key)
 		assert.Equal(t, 100, cfg.RateLimit)
+		assert.Equal(t, "public.pem", cfg.CryptoKey)
+		assert.Equal(t, "config2.json", cfg.Config)
 	}
 	cmd := NewAgent()
 	err := cmd.Execute()
 	assert.NoError(t, err)
+	_ = os.Setenv("CONFIG", "")
 }
